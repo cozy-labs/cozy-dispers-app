@@ -1,0 +1,36 @@
+{
+  "name": "Cozy-DISPERS",
+  "slug": "dispers",
+  "icon": "icon.svg",
+  "categories": [],
+  "version": "0.1.0",
+  "licence": "AGPL-3.0",
+  "editor": "",
+  "source": "https://github.com/tintinmar1995/cozy-dispers-app.git@build",
+  "developer": {
+    "name": "tintinmar1995",
+    "url": ""
+  },
+  "routes": {
+    "/": {
+      "folder": "/",
+      "index": "index.html",
+      "public": false
+    }
+  },
+  "permissions": {
+    "apps": {
+      "description": "Required by the cozy-bar to display the icons of the apps",
+      "type": "io.cozy.apps",
+      "verbs": ["GET"]
+    },
+    "querydoc": {
+      "description": "Required to save a query in database and retrieve it after",
+      "type": "io.cozy.queries"
+    },
+    "query": {
+      "description": "Required to create a new query",
+      "type": "cc.cozycloud.dispers.query"
+    }
+  }
+}
