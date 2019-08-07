@@ -11,6 +11,7 @@ import Card from 'cozy-ui/react/Card'
 import Field from 'cozy-ui/react/Field'
 import Checkbox from 'cozy-ui/react/Checkbox'
 import SelectBox from 'cozy-ui/react/SelectBox'
+import Empty from 'cozy-ui/react/Empty'
 import { templateQuery, templateLayer } from 'assets/template_input_query.js'
 import { QUERIES_DOCTYPE } from 'doctypes'
 
@@ -49,6 +50,15 @@ const optionsLabels = [
   { label: 'Health', value: 'health' },
   { label: 'Finance', value: 'finance' }
 ]
+
+const styles = {
+  empty: {
+    position: 'relative',
+    transform: 'translateZ(0)',
+    height: '500px',
+    display: 'flex'
+  }
+}
 
 function search(nameKey, myArray) {
   for (var i = 0; i < myArray.length; i++) {
@@ -311,207 +321,216 @@ export class NewQuery extends Component {
         {isFinished ? (
           <center>
             <div>
-              <h2>
-                {' '}
-                Training launched ! You&apos;ll see your data in &quot;Saved
-                trainings&quot; when it&apos;s done.
-              </h2>
+              <div style={styles.empty}>
+                <Empty
+                  icon="cozy"
+                  title="The query is running"
+                  text='Go to "Saved Queries" to follow it'
+                />
+              </div>
             </div>
           </center>
         ) : (
-          <form onSubmit={this.handleSubmit}>
-            <p>
-              <ButtonAction
-                label="Demo"
-                rightIcon="openwith"
-                onClick={this.demo}
-              />
-              <ButtonAction
-                type="error"
-                label="Reset form"
-                onClick={this.reset}
-                rightIcon="file-none"
-              />
-            </p>
-            <br />
-            <Tabs initialActiveTab="targets">
-              <TabList>
-                <Tab name="targets">Define targets</Tab>
-                <Tab name="t">Query targets</Tab>
-                <Tab name="da">Aggregate data</Tab>
-                <Tab name="general">Run Query</Tab>
-              </TabList>
-              <TabPanels>
-                <TabPanel name="targets">
-                  <Field
-                    id="idField"
-                    label="Target Profile"
-                    type="textarea"
-                    value={targetProfile}
-                    placeholder="Select..."
-                    onChange={event => {
-                      this.setState({ targetProfile: event.target.value })
-                    }}
-                    size="medium"
-                  />
-                  <Label htmlFor="idConcepts" style={{ marginRight: '3px' }}>
-                    <Icon icon="cozy" /> Available Concepts
-                  </Label>
-                  <SelectBox options={optionsConcept} id="idConcepts" />
-                </TabPanel>
-                <TabPanel name="t">
-                  <Field
-                    label="Choose one Doctype"
-                    type="select"
-                    value={localquery}
-                    onChange={event => {
-                      this.setState({ localquery: event })
-                    }}
-                    options={optionsDataset}
-                    placeholder="Select ..."
-                  />
-                </TabPanel>
-                <TabPanel name="da">
-                  <p>
-                    <Label htmlFor="idNumberlayer">Number of layers</Label>
-                    <Input
-                      type="number"
+          <div>
+            <h1>Build a new query</h1>
+            <form onSubmit={this.handleSubmit}>
+              <p>
+                <ButtonAction
+                  label="Demo"
+                  rightIcon="openwith"
+                  onClick={this.demo}
+                />
+                <ButtonAction
+                  type="error"
+                  label="Reset form"
+                  onClick={this.reset}
+                  rightIcon="file-none"
+                />
+              </p>
+              <br />
+              <Tabs initialActiveTab="targets">
+                <TabList>
+                  <Tab name="targets">Define targets</Tab>
+                  <Tab name="t">Query targets</Tab>
+                  <Tab name="da">Aggregate data</Tab>
+                  <Tab name="general">Run Query</Tab>
+                </TabList>
+                <TabPanels>
+                  <TabPanel name="targets">
+                    <Field
+                      id="idField"
+                      label="Target Profile"
+                      type="textarea"
+                      value={targetProfile}
                       placeholder="Select..."
-                      id="idNumberlayer"
-                      value={numberOfLayers}
                       onChange={event => {
-                        this.setState({ numberOfLayers: event.target.value })
+                        this.setState({ targetProfile: event.target.value })
                       }}
-                      min="1"
-                      max="100"
-                      step="1"
+                      size="medium"
                     />
-                  </p>
-                  <Card>
+                    <Label htmlFor="idConcepts" style={{ marginRight: '3px' }}>
+                      <Icon icon="cozy" /> Available Concepts
+                    </Label>
+                    <SelectBox options={optionsConcept} id="idConcepts" />
+                  </TabPanel>
+                  <TabPanel name="t">
+                    <Field
+                      label="Choose one Doctype"
+                      type="select"
+                      value={localquery}
+                      onChange={event => {
+                        this.setState({ localquery: event })
+                      }}
+                      options={optionsDataset}
+                      placeholder="Select ..."
+                    />
+                  </TabPanel>
+                  <TabPanel name="da">
                     <p>
-                      <Label htmlFor="idNumberlayer">Select layer</Label>
+                      <Label htmlFor="idNumberlayer">Number of layers</Label>
                       <Input
                         type="number"
                         placeholder="Select..."
                         id="idNumberlayer"
-                        value={selectedLayer}
+                        value={numberOfLayers}
                         onChange={event => {
-                          this.setState({ selectedLayer: event.target.value })
+                          this.setState({ numberOfLayers: event.target.value })
                         }}
-                        min="0"
-                        max={numberOfLayers}
+                        min="1"
+                        max="100"
                         step="1"
                       />
                     </p>
-                    <Label htmlFor="layer">Size</Label>
-                    <Input
-                      type="number"
-                      id="layer"
-                      value={layers_da[selectedLayer - 1].layer_size}
-                      onChange={event => {
-                        const { layers_da } = this.state
-                        layers_da[selectedLayer - 1].layer_size =
-                          event.target.value
-                        this.setState({ layers_da: layers_da })
-                      }}
-                      min="1"
-                      max={isLastLayer ? 1 : 100}
-                      step="1"
-                    />
-                    <Field
-                      label="Aggregation Function"
-                      type="select"
-                      options={optionsTypeLayer}
-                      placeholder="Select ..."
-                      value={layers_da[selectedLayer - 1].layer_job.func}
-                      onChange={event => {
-                        const { selectedLayer, layers_da } = this.state
-                        layers_da[selectedLayer - 1].layer_job.func = event
-                        this.setState({ layers_da: layers_da })
-                      }}
-                    />
-                    <InputGroup prepend={<Bold className="u-pl-1">Keys </Bold>}>
+                    <Card>
+                      <p>
+                        <Label htmlFor="idNumberlayer">Select layer</Label>
+                        <Input
+                          type="number"
+                          placeholder="Select..."
+                          id="idNumberlayer"
+                          value={selectedLayer}
+                          onChange={event => {
+                            this.setState({ selectedLayer: event.target.value })
+                          }}
+                          min="0"
+                          max={numberOfLayers}
+                          step="1"
+                        />
+                      </p>
+                      <Label htmlFor="layer">Size</Label>
                       <Input
-                        placeholder="Value"
-                        value={layers_da[selectedLayer - 1].layer_job.args.keys}
+                        type="number"
+                        id="layer"
+                        value={layers_da[selectedLayer - 1].layer_size}
                         onChange={event => {
-                          var { selectedLayer, layers_da } = this.state
-                          layers_da[selectedLayer - 1].layer_job.args.keys =
+                          const { layers_da } = this.state
+                          layers_da[selectedLayer - 1].layer_size =
                             event.target.value
                           this.setState({ layers_da: layers_da })
                         }}
+                        min="1"
+                        max={isLastLayer ? 1 : 100}
+                        step="1"
                       />
-                    </InputGroup>
-                    <br />
-                    <InputGroup
-                      prepend={<Bold className="u-pl-1">Weight </Bold>}
-                    >
-                      <Input
-                        placeholder="Value"
-                        value={
-                          layers_da[selectedLayer - 1].layer_job.args.weight
-                        }
+                      <Field
+                        label="Aggregation Function"
+                        type="select"
+                        options={optionsTypeLayer}
+                        placeholder="Select ..."
+                        value={layers_da[selectedLayer - 1].layer_job.func}
                         onChange={event => {
-                          var { selectedLayer, layers_da } = this.state
-                          layers_da[selectedLayer - 1].layer_job.args.weight =
-                            event.target.value
+                          const { selectedLayer, layers_da } = this.state
+                          layers_da[selectedLayer - 1].layer_job.func = event
                           this.setState({ layers_da: layers_da })
                         }}
                       />
-                    </InputGroup>
-                  </Card>
-                </TabPanel>
-                <TabPanel name="general">
-                  <div>
-                    <p>
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="Pretty name for a query"
-                        value={name}
-                        onChange={event => {
-                          this.setState({ name: event.target.value })
-                        }}
-                      />
-                    </p>
+                      <InputGroup
+                        prepend={<Bold className="u-pl-1">Keys </Bold>}
+                      >
+                        <Input
+                          placeholder="Value"
+                          value={
+                            layers_da[selectedLayer - 1].layer_job.args.keys
+                          }
+                          onChange={event => {
+                            var { selectedLayer, layers_da } = this.state
+                            layers_da[selectedLayer - 1].layer_job.args.keys =
+                              event.target.value
+                            this.setState({ layers_da: layers_da })
+                          }}
+                        />
+                      </InputGroup>
+                      <br />
+                      <InputGroup
+                        prepend={<Bold className="u-pl-1">Weight </Bold>}
+                      >
+                        <Input
+                          placeholder="Value"
+                          value={
+                            layers_da[selectedLayer - 1].layer_job.args.weight
+                          }
+                          onChange={event => {
+                            var { selectedLayer, layers_da } = this.state
+                            layers_da[selectedLayer - 1].layer_job.args.weight =
+                              event.target.value
+                            this.setState({ layers_da: layers_da })
+                          }}
+                        />
+                      </InputGroup>
+                    </Card>
+                  </TabPanel>
+                  <TabPanel name="general">
+                    <div>
+                      <p>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          placeholder="Pretty name for a query"
+                          value={name}
+                          onChange={event => {
+                            this.setState({ name: event.target.value })
+                          }}
+                        />
+                      </p>
 
-                    <Label htmlFor="idConcepts">Labels</Label>
-                    <SelectBox
-                      options={optionsLabels}
-                      isMulti
-                      id="idConcepts"
-                      value={labels}
-                      onChange={event => {
-                        this.setState({ labels: event })
-                      }}
-                      components={{
-                        Option: CheckboxOption
-                      }}
-                    />
+                      <Label htmlFor="idConcepts">Labels</Label>
+                      <SelectBox
+                        options={optionsLabels}
+                        isMulti
+                        id="idConcepts"
+                        value={labels}
+                        onChange={event => {
+                          this.setState({ labels: event })
+                        }}
+                        components={{
+                          Option: CheckboxOption
+                        }}
+                      />
+                      <br />
+                      <Checkbox
+                        label="Encrypted query"
+                        value={isEncrypted}
+                        onChange={() => {
+                          var { isEncrypted } = this.state
+                          isEncrypted = !isEncrypted
+                          this.setState({ isEncrypted: isEncrypted })
+                        }}
+                      />
+                    </div>
                     <br />
-                    <Checkbox
-                      label="Encrypted query"
-                      value={isEncrypted}
-                      onChange={() => {
-                        var { isEncrypted } = this.state
-                        isEncrypted = !isEncrypted
-                        this.setState({ isEncrypted: isEncrypted })
-                      }}
+                    <Button
+                      onClick={this.submit}
+                      type="submit"
+                      busy={isWorking}
+                      label="Run"
+                      size="large"
+                      extension="narrow"
                     />
-                  </div>
-                  <br />
-                  <Button
-                    onClick={this.submit}
-                    type="submit"
-                    busy={isWorking}
-                    label="Run"
-                    size="large"
-                    extension="narrow"
-                  />
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </form>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+            </form>
+          </div>
         )}
       </div>
     )
