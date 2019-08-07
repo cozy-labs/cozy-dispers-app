@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Spinner from 'cozy-ui/react/Spinner'
+import Empty from 'cozy-ui/react/Empty'
 import { queryConnect } from 'cozy-client'
 import { dispersQueriesQuery } from 'doctypes'
 
@@ -8,30 +9,43 @@ import MLList from './MLList'
 
 export const Results = props => {
   const { data, fetchStatus } = props.queries
-  let styles = {
-    marginLeft: '25%',
-    marginRight: '25%'
-  }
 
   const isThereData = data.length != 0
 
   // cozy-client statuses
   const isLoading = fetchStatus === 'loading' || fetchStatus === 'pending'
 
+  const styles = {
+    empty: {
+      position: 'relative',
+      transform: 'translateZ(0)',
+      height: '500px',
+      display: 'flex'
+    }
+  }
+
   return (
     <div>
-      <h1>Your queries</h1>
-      <br />
-      <br />
-      <div style={styles}>
+      <div>
         {isLoading ? (
           <Spinner size="xxlarge" middle />
         ) : (
           <div>
             {isThereData ? (
-              <MLList queries={data} />
+              <div>
+                <h1>Your queries</h1>
+                <MLList queries={data} />
+              </div>
             ) : (
-              <h2>You don&apos;t seem to have launched any query yet.</h2>
+              <div>
+                <div style={styles.empty}>
+                  <Empty
+                    icon="cozy"
+                    title="You don't seem to have launched any query."
+                    text="Try running some queries"
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}
