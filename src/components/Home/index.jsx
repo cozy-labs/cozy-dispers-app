@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text, SubTitle } from 'cozy-ui/react/Text'
-import ButtonLink from 'cozy-ui/react/Button'
+import { ButtonLink } from 'cozy-ui/react/Button'
 import Card from 'cozy-ui/react/Card'
 
 export const Home = () => {
@@ -19,9 +19,8 @@ export const Home = () => {
             This is some card content. Content can be small or huge.
           </Text>
           <ButtonLink
-            target="_blank"
             label="Link to Docs"
-            href="https://github.com/tintinmar1995/cozy-stack"
+            href="https://github.com/tintinmar1995/cozy-stack/tree/enclaves-docs/docs"
           />
         </Card>
 
@@ -33,7 +32,6 @@ export const Home = () => {
             This is some card content. Content can be small or huge.
           </Text>
           <ButtonLink
-            target="_blank"
             label="Link to Repo"
             href="https://github.com/tintinmar1995/cozy-stack"
           />
