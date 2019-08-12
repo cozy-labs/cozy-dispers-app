@@ -68,6 +68,103 @@ function search(nameKey, myArray) {
   }
 }
 
+function buildInputQuery(localquery, isEncrypted, targetProfile, layers_da) {
+  // This function is going to inject string into a stringified json imported from template_input_query
+  var jsonConcept = ''
+  var jsonLayers = ''
+  var jsonPsdConcept = ''
+  var jsonTargetProfile = targetProfile.split('"').join('\\"')
+  var jsonLayerArgs = ''
+
+  // Extract an array of Concpets from the targetProfile
+  var concepts = targetProfile
+    .split('::')
+    .join(':')
+    .split('OR')
+    .join('')
+    .split('AND')
+    .join('')
+    .split('(')
+    .join('')
+    .split(')')
+    .join('')
+    .split('"')
+    .join('')
+    .split(':')
+
+  var i = 0
+  var pseudoConcept = new Map()
+  var conceptID
+  var conceptPseudoAnonymized
+  while (i < concepts.length) {
+    // e.g. concepts[i]="Work in Paris" conceptID="work>Paris"
+    conceptID = search(concepts[i], optionsConcept).value
+    conceptPseudoAnonymized = new md5().update('concepts' + i).digest('hex')
+
+    // Add concept to jsonConcept
+    jsonConcept = jsonConcept + '"' + conceptID + '",'
+
+    // Add conceptPseudoAnonymized to pseudoConcept
+    pseudoConcept.set(conceptID, conceptPseudoAnonymized)
+
+    // Replace concept with pseudo-anonymised concept
+    jsonTargetProfile = jsonTargetProfile
+      .split(concepts[i])
+      .join(conceptPseudoAnonymized)
+    i = i + 1
+  }
+
+  // Delete the final ',' from jsonConcept
+  jsonConcept = jsonConcept.substring(0, jsonConcept.length - 1)
+
+  for (let [key, value] of pseudoConcept) {
+    jsonPsdConcept = jsonPsdConcept + '"' + key + '":"' + value + '",'
+  }
+  jsonPsdConcept = jsonPsdConcept.substring(0, jsonPsdConcept.length - 1)
+
+  // build jsonLayers from layers_da
+  i = 0
+  while (i < layers_da.length) {
+    jsonLayerArgs =
+      '"keys":["' +
+      layers_da[i].layer_job.args.keys.split(',').join('","') +
+      '"]'
+
+    // check if weight is specified. If yes, add it to jsonLayers
+    if (layers_da[i].layer_job.args.weight != null) {
+      jsonLayerArgs =
+        jsonLayerArgs + ',"weight":"' + layers_da[i].layer_job.args.weight + '"'
+    }
+
+    jsonLayers =
+      jsonLayers +
+      templateLayer
+        .replace('//FUNC//', layers_da[i].layer_job.func.value)
+        .replace('//ARGS//', jsonLayerArgs)
+        .replace('//SIZE//', layers_da[i].layer_size)
+    jsonLayers = jsonLayers + ','
+    i = i + 1
+  }
+  // Delete the final ',' from jsonLayers
+  jsonLayers = jsonLayers.substring(0, jsonLayers.length - 1)
+
+  // Build Query
+  var stringQuery = templateQuery
+    .replace('//CONCEPT//', jsonConcept)
+    .replace('//PSD-CONCEPT//', jsonPsdConcept)
+    .replace('//LAYERS//', jsonLayers)
+    .replace('//DOCTYPE//', localquery.value)
+    .replace('//OPERATION//', jsonTargetProfile)
+    .replace('//ENCRYPTED//', isEncrypted)
+
+  // Remote body need to be map[string]string
+  // It's an association between var name and value
+  // Vars are defined in remote-doctypes
+  // In our case, stringQuery is called "data"
+
+  return { data: stringQuery }
+}
+
 export class NewQuery extends Component {
   constructor(props, context) {
     super(props, context)
@@ -111,109 +208,6 @@ export class NewQuery extends Component {
     this.initialState = this.state
   }
 
-  buildInputQuery = () => {
-    const { localquery, isEncrypted, targetProfile, layers_da } = this.state
-
-    // This function is going to inject string into a stringified json imported from template_input_query
-    var jsonConcept = ''
-    var jsonLayers = ''
-    var jsonPsdConcept = ''
-    var jsonTargetProfile = targetProfile.split('"').join('\\"')
-    var jsonLayerArgs = ''
-
-    // Extract an array of Concpets from the targetProfile
-    var concepts = targetProfile
-      .split('::')
-      .join(':')
-      .split('OR')
-      .join('')
-      .split('AND')
-      .join('')
-      .split('(')
-      .join('')
-      .split(')')
-      .join('')
-      .split('"')
-      .join('')
-      .split(':')
-
-    var i = 0
-    var pseudoConcept = new Map()
-    var conceptID
-    var conceptPseudoAnonymized
-    while (i < concepts.length) {
-      // e.g. concepts[i]="Work in Paris" conceptID="work>Paris"
-      conceptID = search(concepts[i], optionsConcept).value
-      conceptPseudoAnonymized = new md5().update('concepts' + i).digest('hex')
-
-      // Add concept to jsonConcept
-      jsonConcept =
-        jsonConcept +
-        '{ "concept":"' +
-        conceptID +
-        '","encrypted":' +
-        isEncrypted +
-        '},'
-
-      // Add conceptPseudoAnonymized to pseudoConcept
-      pseudoConcept.set(conceptID, conceptPseudoAnonymized)
-
-      // Replace concept with pseudo-anonymised concept
-      jsonTargetProfile = jsonTargetProfile
-        .split(concepts[i])
-        .join(conceptPseudoAnonymized)
-      i = i + 1
-    }
-
-    // Delete the final ',' from jsonConcept
-    jsonConcept = jsonConcept.substring(0, jsonConcept.length - 1)
-
-    for (let [key, value] of pseudoConcept) {
-      jsonPsdConcept = jsonPsdConcept + '"' + key + '":"' + value + '",'
-    }
-    jsonPsdConcept = jsonPsdConcept.substring(0, jsonPsdConcept.length - 1)
-
-    // build jsonLayers from layers_da
-    i = 0
-    while (i < layers_da.length) {
-      jsonLayerArgs =
-        '"keys":["' +
-        layers_da[i].layer_job.args.keys.split(',').join('","') +
-        '"]'
-
-      // check if weight is specified. If yes, add it to jsonLayers
-      if (layers_da[i].layer_job.args.weight != null) {
-        jsonLayerArgs =
-          jsonLayerArgs +
-          ',"weight":"' +
-          layers_da[i].layer_job.args.weight +
-          '"'
-      }
-
-      jsonLayers =
-        jsonLayers +
-        templateLayer
-          .replace('//FUNC//', layers_da[i].layer_job.func.value)
-          .replace('//ARGS//', jsonLayerArgs)
-          .replace('//SIZE//', layers_da[i].layer_size)
-      jsonLayers = jsonLayers + ','
-      i = i + 1
-    }
-    // Delete the final ',' from jsonLayers
-    jsonLayers = jsonLayers.substring(0, jsonLayers.length - 1)
-
-    // Build Query
-    var stringQuery = templateQuery
-      .replace('//CONCEPT//', jsonConcept)
-      .replace('//PSD-CONCEPT//', jsonPsdConcept)
-      .replace('//LAYERS//', jsonLayers)
-      .replace('//DOCTYPE//', localquery.value)
-      .replace('//OPERATION//', jsonTargetProfile)
-      .replace('//ENCRYPTED//', isEncrypted)
-
-    return JSON.parse(stringQuery)
-  }
-
   demo = () => {
     this.setState(() => this.initialState)
   }
@@ -234,7 +228,16 @@ export class NewQuery extends Component {
     this.setState(() => ({ isWorking: true, isFinished: false }))
 
     // build the body of the http request
-    const body = this.buildInputQuery()
+    try {
+      var body = buildInputQuery(
+        localquery,
+        isEncrypted,
+        targetProfile,
+        layers_da
+      )
+    } catch (e) {
+      alert(e)
+    }
 
     try {
       client.stackClient
