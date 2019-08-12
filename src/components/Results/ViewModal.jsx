@@ -2,6 +2,15 @@ import React, { Component } from 'react'
 
 import Button from 'cozy-ui/react/Button'
 import { Modal, ModalContent } from 'cozy-ui/react'
+import StepDurations from './Graph'
+
+const {
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel
+} = require('cozy-ui/react/Tabs')
 
 export class ViewModal extends Component {
   constructor(props, context) {
@@ -15,6 +24,7 @@ export class ViewModal extends Component {
   render() {
     const { boolModal } = this.state
     const { training } = this.props
+
     return (
       <div>
         {boolModal ? (
@@ -26,7 +36,7 @@ export class ViewModal extends Component {
               extension="narrow"
             />
             <Modal
-              title="Details about your training"
+              title="Details about your query"
               secondaryAction={() => {
                 this.setState({ boolModal: false })
               }}
@@ -53,64 +63,65 @@ export class ViewModal extends Component {
                         </th>
                         <th>{training.localquery.value}</th>
                       </tr>
-                      {training.results && (
-                        <tr>
-                          <th>
-                            <b>Results :</b>
-                          </th>
-                          <th>{training.results}</th>
-                        </tr>
-                      )}
                     </table>
                     <br />
                   </center>
                 </div>
 
-                <img src="ia.jpg" width="200px" />
-
-                <hr />
-
-                <p>Target profile : </p>
-
-                <small>{training.targetProfile}</small>
-                <br />
-                <br />
-
-                {(training => {
-                  var out = []
-                  training.layers_da.forEach(function(item, index) {
-                    out.push(<hr />)
-                    out.push(<p>Layer n°{index} :</p>)
-                    out.push(
-                      <div>
-                        <center>
-                          <table className="tg">
-                            <tr>
-                              <th> Function : </th>
-                              <th>{item.layer_job.func.value}</th>
-                            </tr>
-                            <tr>
-                              <th> Size : </th>
-                              <th>{item.layer_size} DAs</th>
-                            </tr>
-                            <tr>
-                              <th> Keys : </th>
-                              <th>{item.layer_job.args.keys}</th>
-                            </tr>
-                            {item.layer_job.args.weight && (
-                              <tr>
-                                <th> Weight : </th>
-                                <th>{item.layer_job.args.weight}</th>
-                              </tr>
-                            )}
-                          </table>
-                        </center>
-                      </div>
-                    )
-                  })
-                  return out
-                })(training)}
-                <hr />
+                <Tabs initialActiveTab="res">
+                  <TabList>
+                    <Tab name="targets">Target Profile</Tab>
+                    <Tab name="aggr">Aggregation</Tab>
+                    <Tab name="exe">Execution</Tab>
+                    <Tab name="res">Results</Tab>
+                  </TabList>
+                  <TabPanels>
+                    <TabPanel name="targets">
+                      <small>{training.targetProfile}</small>
+                    </TabPanel>
+                    <TabPanel name="aggr">
+                      {(training => {
+                        var out = []
+                        training.layers_da.forEach(function(item, index) {
+                          out.push(<hr />)
+                          out.push(<p>Layer n°{index} :</p>)
+                          out.push(
+                            <div>
+                              <center>
+                                <table className="tg">
+                                  <tr>
+                                    <th> Function : </th>
+                                    <th>{item.layer_job.func.value}</th>
+                                  </tr>
+                                  <tr>
+                                    <th> Size : </th>
+                                    <th>{item.layer_size} DAs</th>
+                                  </tr>
+                                  <tr>
+                                    <th> Keys : </th>
+                                    <th>{item.layer_job.args.keys}</th>
+                                  </tr>
+                                  {item.layer_job.args.weight && (
+                                    <tr>
+                                      <th> Weight : </th>
+                                      <th>{item.layer_job.args.weight}</th>
+                                    </tr>
+                                  )}
+                                </table>
+                              </center>
+                            </div>
+                          )
+                        })
+                        return out
+                      })(training)}
+                    </TabPanel>
+                    <TabPanel name="exe">
+                      <StepDurations training={training}></StepDurations>
+                      Repartition of time (communication, calculation,conductor)
+                    </TabPanel>
+                    <TabPanel name="res"></TabPanel>
+                  </TabPanels>
+                </Tabs>
               </ModalContent>
             </Modal>
           </div>
@@ -126,6 +137,5 @@ export class ViewModal extends Component {
     )
   }
 }
-
 // get mutations from the client to use createDocument
 export default ViewModal
