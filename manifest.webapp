@@ -9,7 +9,7 @@
   "source": "https://github.com/tintinmar1995/cozy-dispers-app.git@build",
   "developer": {
     "name": "tintinmar1995",
-    "url": ""
+    "url": "tintinmar1995.github.io"
   },
   "routes": {
     "/": {
@@ -30,7 +30,13 @@
     },
     "query": {
       "description": "Required to create a new query",
-      "type": "cc.cozycloud.dispers.query"
+      "type": "cc.cozycloud.dispers.query",
+      "verbs": ["POST"]
+    },
+    "state": {
+      "description": "Required to retreive queries' state",
+      "type": "cc.cozycloud.dispers.state",
+      "verbs": ["GET"]
     }
   }
 }
