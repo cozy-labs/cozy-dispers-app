@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 
 import Button from 'cozy-ui/react/Button'
 import { Modal, ModalContent } from 'cozy-ui/react'
-import StepDurations from './Graph'
+import { StepDurations, TimeDistribution } from './Graphs'
 
 const {
   Tabs,
@@ -117,7 +117,7 @@ export class ViewModal extends Component {
                     </TabPanel>
                     <TabPanel name="exe">
                       <StepDurations training={training}></StepDurations>
-                      Repartition of time (communication, calculation,conductor)
+                      <TimeDistribution training={training}></TimeDistribution>
                     </TabPanel>
                     <TabPanel name="res"></TabPanel>
                   </TabPanels>
