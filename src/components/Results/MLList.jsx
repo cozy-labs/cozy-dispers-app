@@ -80,15 +80,16 @@ export class MLList extends Component {
                               color="#B449E7"
                             />
                           }
-                          ) - <em>{mTrain.status}</em>
+                          )
                         </h3>
                       </p>
                     </center>
                     <p>
-                      <b>QueryID :</b>
+                      <b>QueryID : {mTrain.queryid}</b>
                     </p>
                     <p>
-                      <b>Created at :</b> {mTrain.cozyMetadata.createdAt}
+                      <b>Created at :</b>{' '}
+                      {new Date(mTrain.cozyMetadata.createdAt).toLocaleString()}
                     </p>
 
                     <center>

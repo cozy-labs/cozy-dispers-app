@@ -249,7 +249,6 @@ export class NewQuery extends Component {
       client.stackClient
         .fetchJSON('POST', '/remote/cc.cozycloud.dispers.query', body)
         .then(async response => {
-          var json = JSON.stringify(response)
           try {
             await client.create(QUERIES_DOCTYPE, {
               localquery: localquery,
@@ -259,7 +258,7 @@ export class NewQuery extends Component {
               layers_da: layers_da,
               status: 'Running',
               name: name,
-              queryid: json['queryid']
+              queryid: response['query_id']
             })
             this.setState(() => ({
               isWorking: false,

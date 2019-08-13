@@ -20,11 +20,12 @@ export class StepDurations extends Component {
       times.push(new Date(training.state.ExecutionMetadata.start).getTime())
 
       var tasks = [
-        'DecryptConcept',
-        'FetchListsOfAddresses',
-        'SelectTargets',
-        'LocalQuery'
+        'Decrypt Concept',
+        'Fetch Lists of Addresses',
+        'Select Targets',
+        'Local Query'
       ]
+
       for (var i = 0; i < tasks.length; i++) {
         var tmp = new Date(
           training.state.ExecutionMetadata.tasks[tasks[i]].end
@@ -69,7 +70,7 @@ export class StepDurations extends Component {
       })
       myBarChart.draw()
     } catch (e) {
-      alert(e)
+      //alert(e)
     }
   }
 }
@@ -95,10 +96,10 @@ export class TimeDistribution extends Component {
         new Date(training.state.ExecutionMetadata.start).getTime()
 
       var tasks = [
-        //'DecryptConcept',
-        'FetchListsOfAddresses',
-        'SelectTargets',
-        'LocalQuery'
+        //'Decrypt Concept',
+        'Fetch Lists of Addresses',
+        'Select Targets',
+        'Local Query'
       ]
       for (var i = 0; i < training['layers_da'].length; i++) {
         for (var j = 0; j < training['layers_da'][i]['layer_size']; j++) {
@@ -142,7 +143,7 @@ export class TimeDistribution extends Component {
       )
       myDoughtNutChart.draw()
     } catch (e) {
-      alert(e)
+      //alert(e)
     }
   }
 }

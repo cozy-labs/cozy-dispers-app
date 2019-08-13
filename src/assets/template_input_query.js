@@ -23,7 +23,7 @@ const templateQuery = `{
 
 const templateLayer = `
 {
-  "layer_job": {
+  "layer_func": {
     "func": "//FUNC//",
     "args": {//ARGS//}
   },
