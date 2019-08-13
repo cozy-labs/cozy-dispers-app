@@ -2,7 +2,7 @@ const templateQuery = `{
   "concepts": [//CONCEPT//],
   "pseudo_concepts": {//PSD-CONCEPT//},
   "encrypted": //ENCRYPTED//,
-  "localquery": {
+  "local_query": {
     "findrequest": {
       "selector": {
         "_id": {
@@ -17,12 +17,7 @@ const templateQuery = `{
 		]
 		}
   },
-  "operation": "//OPERATION//",
-  "nb_actors": {
-    "ci": 1,
-    "tf": 1,
-    "t": 1
-  },
+  "target_profile": "//OPERATION//",
   "layers_da": [//LAYERS//]
 }`
 
