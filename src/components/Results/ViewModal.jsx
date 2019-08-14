@@ -2,9 +2,11 @@ import React, { Component } from 'react'
 
 import { withClient } from 'cozy-client'
 import Avatar from 'cozy-ui/react/Avatar'
-import Button from 'cozy-ui/react/Button'
+import { Button, ButtonLink } from 'cozy-ui/react/Button'
 import Chip from 'cozy-ui/react/Chip'
 import Icon from 'cozy-ui/react/Icon'
+import Input from 'cozy-ui/react/Input'
+import InputGroup from 'cozy-ui/react/InputGroup'
 import Card from 'cozy-ui/react/Card'
 import { Modal, ModalContent } from 'cozy-ui/react'
 import { StepDurations, TimeDistribution } from './Graphs'
@@ -143,6 +145,21 @@ export class ViewModal extends Component {
                         </th>
                         <th>{training.localquery.value}</th>
                       </tr>
+                      <tr>
+                        <th>
+                          <b>Duration :</b>{' '}
+                        </th>
+                        <th>
+                          {(new Date(
+                            training.state.ExecutionMetadata.end
+                          ).getTime() -
+                            new Date(
+                              training.state.ExecutionMetadata.start
+                            ).getTime()) /
+                            1000}
+                          s
+                        </th>
+                      </tr>
                     </table>
                     <br />
                   </center>
@@ -201,10 +218,47 @@ export class ViewModal extends Component {
                     </TabPanel>
                     <TabPanel name="exe">
                       <StepDurations training={training}></StepDurations>
+                      <br />
                       <TimeDistribution training={training}></TimeDistribution>
                     </TabPanel>
                     <TabPanel name="res">
-                      <p>{JSON.stringify(training.state.Results)}</p>
+                      <form>
+                        <div>
+                          <InputGroup
+                            append={
+                              <ButtonLink
+                                label="Download"
+                                iconOnly
+                                target="_blank"
+                                icon="download"
+                                href={
+                                  'data:application/json;charset=utf-8,' +
+                                  encodeURIComponent(
+                                    JSON.stringify(training.state.Results)
+                                  )
+                                }
+                              />
+                            }
+                          >
+                            <Input
+                              value={JSON.stringify(training.state.Results)}
+                            />
+                          </InputGroup>
+                          <br />
+                          <br />
+                          <br />
+
+                          <ButtonLink
+                            label="Download Query as JSON"
+                            target="_blank"
+                            icon="download"
+                            href={
+                              'data:application/json;charset=utf-8,' +
+                              encodeURIComponent(JSON.stringify(training))
+                            }
+                          />
+                        </div>
+                      </form>
                     </TabPanel>
                   </TabPanels>
                 </Tabs>

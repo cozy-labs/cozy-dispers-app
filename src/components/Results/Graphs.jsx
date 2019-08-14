@@ -9,7 +9,7 @@ export class StepDurations extends Component {
   }
 
   render() {
-    return <canvas ref={this.Canvas} width="400" height="200"></canvas>
+    return <canvas ref={this.Canvas} width="300" height="250"></canvas>
   }
 
   componentDidMount() {
@@ -17,33 +17,26 @@ export class StepDurations extends Component {
     try {
       var times = []
       var labels = []
-      times.push(new Date(training.state.ExecutionMetadata.start).getTime())
+      var tmp = new Date(training.state.ExecutionMetadata.start)
+      times.push(tmp.getTime())
 
       var tasks = [
-        'Decrypt Concept',
-        'Fetch Lists of Addresses',
-        'Select Targets',
-        'Local Query'
+        'DecryptConcept',
+        'FetchListsOfAddresses',
+        'SelectTargets',
+        'LocalQuery'
       ]
+      for (var i = 0; i < training['layers_da'].length; i++) {
+        tasks.push('LaunchLayer' + i)
+      }
 
-      for (var i = 0; i < tasks.length; i++) {
-        var tmp = new Date(
+      for (i = 0; i < tasks.length; i++) {
+        tmp = new Date(
           training.state.ExecutionMetadata.tasks[tasks[i]].end
         ).getTime()
         if (tmp != -62135596800000) {
           times.push(tmp)
           labels.push(tasks[i])
-        }
-      }
-
-      for (i = 0; i < training['layers_da'].length; i++) {
-        var last = training['layers_da'][i]['layer_size'] - 1
-        tmp = new Date(
-          training.state.ExecutionMetadata.tasks['da' + i + '-' + last].end
-        ).getTime()
-        if (tmp != -62135596800000) {
-          times.push(tmp)
-          labels.push('Layer ' + i)
         }
       }
 
@@ -66,6 +59,12 @@ export class StepDurations extends Component {
               borderColor: '#297ef2'
             }
           ]
+        },
+        options: {
+          title: {
+            display: true,
+            text: 'Temporal distribution of tasks'
+          }
         }
       })
       myBarChart.draw()
@@ -82,7 +81,7 @@ export class TimeDistribution extends Component {
   }
 
   render() {
-    return <canvas ref={this.Camembert} width="400" height="200"></canvas>
+    return <canvas ref={this.Camembert} width="400" height="400"></canvas>
   }
 
   componentDidMount() {
@@ -90,25 +89,35 @@ export class TimeDistribution extends Component {
     try {
       var communication = 0
       var computation = 0
-      var conductor = 0
-      var executionDuration =
-        new Date(training.state.ExecutionMetadata.end).getTime() -
-        new Date(training.state.ExecutionMetadata.start).getTime()
+      var tmp2 = training.state.ExecutionMetadata.tasks['DecryptConcept']
+      var tmp = training.state.ExecutionMetadata
+      var conductor =
+        new Date(tmp2.start).getTime() - new Date(tmp.start).getTime()
 
       var tasks = [
-        //'Decrypt Concept',
-        'Fetch Lists of Addresses',
-        'Select Targets',
-        'Local Query'
+        'DecryptConcept',
+        'FetchListsOfAddresses',
+        'SelectTargets',
+        'LocalQuery'
       ]
-      for (var i = 0; i < training['layers_da'].length; i++) {
-        for (var j = 0; j < training['layers_da'][i]['layer_size']; j++) {
-          tasks.push('da' + i + '-' + j)
-        }
-      }
 
-      for (i = 0; i < tasks.length; i++) {
-        var tmp = training.state.ExecutionMetadata.tasks[tasks[i]]
+      for (var i = 0; i < tasks.length; i++) {
+        tmp2 = training.state.ExecutionMetadata.tasks['LaunchLayer0']
+        tmp = training.state.ExecutionMetadata.tasks[tasks[i]]
+
+        if (i < tasks.length - 1) {
+          tmp2 = training.state.ExecutionMetadata.tasks[tasks[i + 1]]
+          conductor =
+            conductor +
+            new Date(tmp2.start).getTime() -
+            new Date(tmp.end).getTime()
+        } else {
+          conductor =
+            conductor +
+            new Date(tmp2.end).getTime() -
+            new Date(tmp.end).getTime()
+        }
+
         if (new Date(tmp.arrival).getTime() != -62135596800000) {
           communication =
             communication +
@@ -122,10 +131,44 @@ export class TimeDistribution extends Component {
             communication +
             new Date(tmp.arrival).getTime() -
             new Date(tmp.start).getTime()
+        } else {
+          computation =
+            computation +
+            new Date(tmp.end).getTime() -
+            new Date(tmp.start).getTime()
         }
       }
 
-      conductor = executionDuration - communication - computation
+      for (i = 1; i < training['layers_da'].length; i++) {
+        tmp = training.state.ExecutionMetadata.tasks['LaunchLayer' + i]
+        conductor =
+          conductor +
+          new Date(tmp.end).getTime() -
+          new Date(tmp.start).getTime()
+      }
+
+      for (i = 0; i < training.state.AsyncMetadata.length; i++) {
+        tmp = training.state.AsyncMetadata[i]
+        if (new Date(tmp.arrival).getTime() != -62135596800000) {
+          communication =
+            communication +
+            new Date(tmp.end).getTime() -
+            new Date(tmp.returning).getTime()
+          computation =
+            computation +
+            new Date(tmp.returning).getTime() -
+            new Date(tmp.arrival).getTime()
+          communication =
+            communication +
+            new Date(tmp.arrival).getTime() -
+            new Date(tmp.start).getTime()
+        } else {
+          computation =
+            computation +
+            new Date(tmp.end).getTime() -
+            new Date(tmp.start).getTime()
+        }
+      }
 
       var myDoughtNutChart = new Chart(
         this.Camembert.current.getContext('2d'),
@@ -135,15 +178,23 @@ export class TimeDistribution extends Component {
             labels: ['communication', 'computation', 'conductor'],
             datasets: [
               {
+                label: 'Time (ms)',
+                backgroundColor: ['#3e95cd', '#8e5ea2', '#3cba9f'],
                 data: [communication, computation, conductor]
               }
             ]
+          },
+          options: {
+            title: {
+              display: true,
+              text: 'Duration of the steps'
+            }
           }
         }
       )
       myDoughtNutChart.draw()
     } catch (e) {
-      //alert(e)
+      alert(e)
     }
   }
 }
