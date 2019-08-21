@@ -43,7 +43,10 @@ const optionsConcept = [
   { value: 'aime>peche', label: 'Aime la pêche' }
 ]
 
-const optionsTypeLayer = [{ label: 'Weighted Sum', value: 'LayerSum' }]
+const optionsTypeLayer = [
+  { label: 'Univariate (Map)', value: 'univariate-map' },
+  { label: 'Univariate (Reduce)', value: 'univariate-reduce' }
+]
 
 const optionsLabels = [
   { label: 'Work', value: 'work' },
@@ -179,16 +182,15 @@ export class NewQuery extends Component {
       layers_da: [
         {
           layer_job: {
-            func: { label: 'Weighted Sum', value: 'sum' },
+            func: { label: 'Univariate (Map)', value: 'univariate-map' },
             args: { keys: 'amount' }
           },
           layer_size: 4
         },
         {
           layer_job: {
-            func: { label: 'Weighted Sum', value: 'sum' },
+            func: { label: 'Univariate (Reduce)', value: 'univariate-reduce' },
             args: {
-              weight: 'length',
               keys: 'amount'
             }
           },
@@ -201,7 +203,7 @@ export class NewQuery extends Component {
         'OR(OR("Travail à Paris"::"Travail à Lille"):OR("Travail à Saint-Etienne"::"Travail à Rennes"))',
       isWorking: false,
       isFinished: false,
-      name: "Mean of operations' amount",
+      name: "Mean/Std/Min/Max of operations' amount",
       titleMsg: 'The query is running',
       msg: 'Go to "Saved Queries" to follow it'
     }
