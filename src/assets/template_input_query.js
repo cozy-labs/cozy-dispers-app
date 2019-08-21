@@ -9,7 +9,7 @@ const templateQuery = `{
           "$gt": null
         }
       },
-      "limit": 1000,
+      "limit": 1000
     },
     "doctype": "//DOCTYPE//",
 		"index": {
