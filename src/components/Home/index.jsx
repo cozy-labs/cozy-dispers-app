@@ -36,9 +36,11 @@ export const Home = () => {
             href="https://github.com/tintinmar1995/cozy-stack"
           />
         </Card>
+        <br />
+        <br />
 
-        <br />
-        <br />
+        <img src="schema_env_dispers_stacks.png" width="100%"></img>
+        <img src="schema_dispers_extended_mm.png" width="100%"></img>
       </div>
     </div>
   )
