@@ -531,7 +531,7 @@ export class NewQuery extends Component {
                 <TabPanels>
                   <TabPanel name="targets">
                     <Infos
-                      text="Use the list of available concepts to help you build your target profile"
+                      text="Pro-tips : Use the list of available concepts to build your target profile"
                       icon="info"
                     />
                     <Field
