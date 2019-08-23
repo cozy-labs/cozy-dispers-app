@@ -108,7 +108,9 @@ function buildInputQuery(
 
   // Extract an array of Concpets from the targetProfile
   var concepts = targetProfile
-    .split('::')
+    .split(')OR')
+    .join(':')
+    .split(')AND')
     .join(':')
     .split('OR')
     .join('')
@@ -117,8 +119,6 @@ function buildInputQuery(
     .split('(')
     .join('')
     .split(')')
-    .join('')
-    .split('"')
     .join('')
     .split(':')
 
@@ -269,7 +269,7 @@ export class NewQuery extends Component {
       labels: [{ label: 'Finance', value: 'finance' }],
       limit: 1000,
       targetProfile:
-        'OR(OR("Atteint du SIDA"::"Atteint de diabète"):OR("Travail à Saint-Etienne"::"Travail à Rennes"))',
+        'OR(OR(Atteint du SIDA:Atteint de diabète)OR(Travail à Saint-Etienne:Travail à Rennes))',
       isWorking: false,
       isFinished: false,
       name: "Sum of operations' amount",

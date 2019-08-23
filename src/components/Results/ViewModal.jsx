@@ -100,99 +100,106 @@ export class ViewModal extends Component {
             >
               <ModalContent>
                 <div>
-                  <table className="tg">
-                    <tr>
-                      <th>
-                        <b>Name :</b>
-                      </th>
-                      <th>{training.name}</th>
-                    </tr>
-                    <tr>
-                      <th>
-                        <b>State :</b>
-                      </th>
-                      <th>
-                        <Icon
-                          icon={
-                            (training.state.Checkpoints['ci'] &&
-                              'check-circle') ||
-                            (!training.state.Checkpoints['ci'] && 'cross-small')
-                          }
-                          color={
-                            (training.state.Checkpoints['ci'] && '#08b442') ||
-                            (!training.state.Checkpoints['ci'] && '#F52D2D')
-                          }
-                        />
-                        <Icon
-                          icon={
-                            (training.state.Checkpoints['fetch'] &&
-                              'check-circle') ||
-                            (!training.state.Checkpoints['fetch'] &&
-                              'cross-small')
-                          }
-                          color={
-                            (training.state.Checkpoints['fetch'] &&
-                              '#08b442') ||
-                            (!training.state.Checkpoints['fetch'] && '#F52D2D')
-                          }
-                        />
-                        <Icon
-                          icon={
-                            (training.state.Checkpoints['tf'] &&
-                              'check-circle') ||
-                            (!training.state.Checkpoints['tf'] && 'cross-small')
-                          }
-                          color={
-                            (training.state.Checkpoints['tf'] && '#08b442') ||
-                            (!training.state.Checkpoints['tf'] && '#F52D2D')
-                          }
-                        />
-                        <Icon
-                          icon={
-                            (training.state.Checkpoints['t'] &&
-                              'check-circle') ||
-                            (!training.state.Checkpoints['t'] && 'cross-small')
-                          }
-                          color={
-                            (training.state.Checkpoints['t'] && '#08b442') ||
-                            (!training.state.Checkpoints['t'] && '#F52D2D')
-                          }
-                        />
-                        <Icon
-                          icon={
-                            (training.state.Checkpoints['da'] &&
-                              'check-circle') ||
-                            (!training.state.Checkpoints['da'] && 'cross-small')
-                          }
-                          color={
-                            (training.state.Checkpoints['da'] && '#08b442') ||
-                            (!training.state.Checkpoints['da'] && '#F52D2D')
-                          }
-                        />
-                      </th>
-                    </tr>
-                    <tr>
-                      <th>
-                        <b>Doctype :</b>
-                      </th>
-                      <th>{training.localquery.value}</th>
-                    </tr>
-                    <tr>
-                      <th>
-                        <b>Duration :</b>{' '}
-                      </th>
-                      <th>
-                        {(new Date(
-                          training.state.ExecutionMetadata.end
-                        ).getTime() -
-                          new Date(
-                            training.state.ExecutionMetadata.start
-                          ).getTime()) /
-                          1000}
-                        s
-                      </th>
-                    </tr>
-                  </table>
+                  <center>
+                    <table className="tg">
+                      <tr>
+                        <th>
+                          <b>Name :</b>
+                        </th>
+                        <th>{training.name}</th>
+                      </tr>
+                      <tr>
+                        <th>
+                          <b>State :</b>
+                        </th>
+                        <th>
+                          <Icon
+                            icon={
+                              (training.state.Checkpoints['ci'] &&
+                                'check-circle') ||
+                              (!training.state.Checkpoints['ci'] &&
+                                'cross-small')
+                            }
+                            color={
+                              (training.state.Checkpoints['ci'] && '#08b442') ||
+                              (!training.state.Checkpoints['ci'] && '#F52D2D')
+                            }
+                          />
+                          <Icon
+                            icon={
+                              (training.state.Checkpoints['fetch'] &&
+                                'check-circle') ||
+                              (!training.state.Checkpoints['fetch'] &&
+                                'cross-small')
+                            }
+                            color={
+                              (training.state.Checkpoints['fetch'] &&
+                                '#08b442') ||
+                              (!training.state.Checkpoints['fetch'] &&
+                                '#F52D2D')
+                            }
+                          />
+                          <Icon
+                            icon={
+                              (training.state.Checkpoints['tf'] &&
+                                'check-circle') ||
+                              (!training.state.Checkpoints['tf'] &&
+                                'cross-small')
+                            }
+                            color={
+                              (training.state.Checkpoints['tf'] && '#08b442') ||
+                              (!training.state.Checkpoints['tf'] && '#F52D2D')
+                            }
+                          />
+                          <Icon
+                            icon={
+                              (training.state.Checkpoints['t'] &&
+                                'check-circle') ||
+                              (!training.state.Checkpoints['t'] &&
+                                'cross-small')
+                            }
+                            color={
+                              (training.state.Checkpoints['t'] && '#08b442') ||
+                              (!training.state.Checkpoints['t'] && '#F52D2D')
+                            }
+                          />
+                          <Icon
+                            icon={
+                              (training.state.Checkpoints['da'] &&
+                                'check-circle') ||
+                              (!training.state.Checkpoints['da'] &&
+                                'cross-small')
+                            }
+                            color={
+                              (training.state.Checkpoints['da'] && '#08b442') ||
+                              (!training.state.Checkpoints['da'] && '#F52D2D')
+                            }
+                          />
+                        </th>
+                      </tr>
+                      <tr>
+                        <th>
+                          <b>Doctype :</b>
+                        </th>
+                        <th>{training.localquery.value}</th>
+                      </tr>
+                      <tr>
+                        <th>
+                          <b>Duration :</b>{' '}
+                        </th>
+                        <th>
+                          {(new Date(
+                            training.state.ExecutionMetadata.end
+                          ).getTime() -
+                            new Date(
+                              training.state.ExecutionMetadata.start
+                            ).getTime()) /
+                            1000}
+                          s
+                        </th>
+                      </tr>
+                    </table>
+                  </center>
                   <br />
                 </div>
 
