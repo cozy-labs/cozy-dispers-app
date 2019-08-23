@@ -4,9 +4,8 @@ import { withClient } from 'cozy-client'
 import Avatar from 'cozy-ui/react/Avatar'
 import { Button, ButtonLink } from 'cozy-ui/react/Button'
 import Chip from 'cozy-ui/react/Chip'
+import { FigureBlock } from 'cozy-ui/react/Figure'
 import Icon from 'cozy-ui/react/Icon'
-import Input from 'cozy-ui/react/Input'
-import InputGroup from 'cozy-ui/react/InputGroup'
 import Card from 'cozy-ui/react/Card'
 import { Modal, ModalContent } from 'cozy-ui/react'
 import { StepDurations, TimeDistribution } from './Graphs'
@@ -30,6 +29,45 @@ const ContactChip = ({ contact }) => (
     {contact.name}
   </Chip>
 )
+
+function displayFuncs(training, indexLayer) {
+  try {
+    var i = 0
+    var out = []
+    while (i < training.layers_da[indexLayer].layer_job.length) {
+      if (
+        training.layers_da[indexLayer].layer_job[i].args.weight != null &&
+        training.layers_da[indexLayer].layer_job[i].args.weight != '' &&
+        training.layers_da[indexLayer].layer_job[i].args.weight != ' '
+      ) {
+        out.push(
+          <p>
+            {training.layers_da[indexLayer].layer_job[i].func.label} of{' '}
+            {JSON.stringify(
+              training.layers_da[indexLayer].layer_job[i].args.keys
+            )}{' '}
+            with {training.layers_da[indexLayer].layer_job[i].args.weight} as
+            weight
+          </p>
+        )
+      } else {
+        out.push(
+          <p>
+            {training.layers_da[indexLayer].layer_job[i].func.label} of{' '}
+            {JSON.stringify(
+              training.layers_da[indexLayer].layer_job[i].args.keys
+            )}
+          </p>
+        )
+      }
+
+      i++
+    }
+    return out
+  } catch (e) {
+    alert(e)
+  }
+}
 
 export class ViewModal extends Component {
   constructor(props, context) {
@@ -62,107 +100,100 @@ export class ViewModal extends Component {
             >
               <ModalContent>
                 <div>
-                  <center>
-                    <table className="tg">
-                      <tr>
-                        <th>
-                          <b>Name :</b>
-                        </th>
-                        <th>{training.name}</th>
-                      </tr>
-                      <tr>
-                        <th>
-                          <b>State :</b>
-                        </th>
-                        <th>
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['ci'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['ci'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['ci'] && '#08b442') ||
-                              (!training.state.Checkpoints['ci'] && '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['fetch'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['fetch'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['fetch'] &&
-                                '#08b442') ||
-                              (!training.state.Checkpoints['fetch'] &&
-                                '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['tf'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['tf'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['tf'] && '#08b442') ||
-                              (!training.state.Checkpoints['tf'] && '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['t'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['t'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['t'] && '#08b442') ||
-                              (!training.state.Checkpoints['t'] && '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['da'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['da'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['da'] && '#08b442') ||
-                              (!training.state.Checkpoints['da'] && '#F52D2D')
-                            }
-                          />
-                        </th>
-                      </tr>
-                      <tr>
-                        <th>
-                          <b>Doctype :</b>
-                        </th>
-                        <th>{training.localquery.value}</th>
-                      </tr>
-                      <tr>
-                        <th>
-                          <b>Duration :</b>{' '}
-                        </th>
-                        <th>
-                          {(new Date(
-                            training.state.ExecutionMetadata.end
-                          ).getTime() -
-                            new Date(
-                              training.state.ExecutionMetadata.start
-                            ).getTime()) /
-                            1000}
-                          s
-                        </th>
-                      </tr>
-                    </table>
-                    <br />
-                  </center>
+                  <table className="tg">
+                    <tr>
+                      <th>
+                        <b>Name :</b>
+                      </th>
+                      <th>{training.name}</th>
+                    </tr>
+                    <tr>
+                      <th>
+                        <b>State :</b>
+                      </th>
+                      <th>
+                        <Icon
+                          icon={
+                            (training.state.Checkpoints['ci'] &&
+                              'check-circle') ||
+                            (!training.state.Checkpoints['ci'] && 'cross-small')
+                          }
+                          color={
+                            (training.state.Checkpoints['ci'] && '#08b442') ||
+                            (!training.state.Checkpoints['ci'] && '#F52D2D')
+                          }
+                        />
+                        <Icon
+                          icon={
+                            (training.state.Checkpoints['fetch'] &&
+                              'check-circle') ||
+                            (!training.state.Checkpoints['fetch'] &&
+                              'cross-small')
+                          }
+                          color={
+                            (training.state.Checkpoints['fetch'] &&
+                              '#08b442') ||
+                            (!training.state.Checkpoints['fetch'] && '#F52D2D')
+                          }
+                        />
+                        <Icon
+                          icon={
+                            (training.state.Checkpoints['tf'] &&
+                              'check-circle') ||
+                            (!training.state.Checkpoints['tf'] && 'cross-small')
+                          }
+                          color={
+                            (training.state.Checkpoints['tf'] && '#08b442') ||
+                            (!training.state.Checkpoints['tf'] && '#F52D2D')
+                          }
+                        />
+                        <Icon
+                          icon={
+                            (training.state.Checkpoints['t'] &&
+                              'check-circle') ||
+                            (!training.state.Checkpoints['t'] && 'cross-small')
+                          }
+                          color={
+                            (training.state.Checkpoints['t'] && '#08b442') ||
+                            (!training.state.Checkpoints['t'] && '#F52D2D')
+                          }
+                        />
+                        <Icon
+                          icon={
+                            (training.state.Checkpoints['da'] &&
+                              'check-circle') ||
+                            (!training.state.Checkpoints['da'] && 'cross-small')
+                          }
+                          color={
+                            (training.state.Checkpoints['da'] && '#08b442') ||
+                            (!training.state.Checkpoints['da'] && '#F52D2D')
+                          }
+                        />
+                      </th>
+                    </tr>
+                    <tr>
+                      <th>
+                        <b>Doctype :</b>
+                      </th>
+                      <th>{training.localquery.value}</th>
+                    </tr>
+                    <tr>
+                      <th>
+                        <b>Duration :</b>{' '}
+                      </th>
+                      <th>
+                        {(new Date(
+                          training.state.ExecutionMetadata.end
+                        ).getTime() -
+                          new Date(
+                            training.state.ExecutionMetadata.start
+                          ).getTime()) /
+                          1000}
+                        s
+                      </th>
+                    </tr>
+                  </table>
+                  <br />
                 </div>
 
                 <Tabs initialActiveTab="res">
@@ -186,29 +217,10 @@ export class ViewModal extends Component {
                               <ContactChip
                                 contact={{
                                   initials: index.toString(),
-                                  name: item.layer_job.func.value.toUpperCase()
+                                  name: 'Layer ' + index.toString()
                                 }}
                               />
-                              <div>
-                                <center>
-                                  <table className="tg">
-                                    <tr>
-                                      <th> Size : </th>
-                                      <th>{item.layer_size} DAs</th>
-                                    </tr>
-                                    <tr>
-                                      <th> Keys : </th>
-                                      <th>{item.layer_job.args.keys}</th>
-                                    </tr>
-                                    {item.layer_job.args.weight && (
-                                      <tr>
-                                        <th> Weight : </th>
-                                        <th>{item.layer_job.args.weight}</th>
-                                      </tr>
-                                    )}
-                                  </table>
-                                </center>
-                              </div>
+                              {displayFuncs(training, index)}
                             </Card>
                           )
                           out.push(br)
@@ -224,29 +236,28 @@ export class ViewModal extends Component {
                     <TabPanel name="res">
                       <form>
                         <div>
-                          <InputGroup
-                            append={
-                              <ButtonLink
-                                label="Download"
-                                iconOnly
-                                target="_blank"
-                                icon="download"
-                                href={
-                                  'data:application/json;charset=utf-8,' +
-                                  encodeURIComponent(
-                                    JSON.stringify(training.state.Results)
-                                  )
-                                }
-                              />
+                          {(training => {
+                            try {
+                              var out = []
+                              const br = <br />
+                              for (var res in training.state.Results) {
+                                out.push(
+                                  <FigureBlock
+                                    label={res}
+                                    total={training.state.Results[res]}
+                                    symbol=""
+                                    coloredPositive
+                                    coloredNegative
+                                    signed
+                                  />
+                                )
+                                out.push(br)
+                              }
+                              return out
+                            } catch (e) {
+                              alert(e)
                             }
-                          >
-                            <Input
-                              value={JSON.stringify(training.state.Results)}
-                            />
-                          </InputGroup>
-                          <br />
-                          <br />
-                          <br />
+                          })(training)}
 
                           <ButtonLink
                             label="Download Query as JSON"

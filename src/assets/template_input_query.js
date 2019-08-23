@@ -9,7 +9,7 @@ const templateQuery = `{
           "$gt": null
         }
       },
-      "limit": 1000,
+      "limit": //LIMIT//
     },
     "doctype": "//DOCTYPE//",
 		"index": {
@@ -24,12 +24,16 @@ const templateQuery = `{
 
 const templateLayer = `
 {
-  "layer_func": {
-    "func": "//FUNC//",
-    "args": {//ARGS//}
-  },
+  "layer_func": [//FUNCS//],
   "layer_size": //SIZE//
 }
 `
 
-export { templateQuery, templateLayer }
+const templateFunc = `
+{
+  "func": "//FUNC//",
+  "args": {//ARGS//}
+}
+`
+
+export { templateQuery, templateLayer, templateFunc }

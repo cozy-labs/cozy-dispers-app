@@ -5,18 +5,23 @@ import Input from 'cozy-ui/react/Input'
 import Icon from 'cozy-ui/react/Icon'
 import InputGroup from 'cozy-ui/react/InputGroup'
 import Label from 'cozy-ui/react/Label'
+import Infos from 'cozy-ui/react/Infos'
 import Button from 'cozy-ui/react/Button'
 import ButtonAction from 'cozy-ui/react/ButtonAction'
 import Card from 'cozy-ui/react/Card'
+import Chip from 'cozy-ui/react/Chip'
 import Field from 'cozy-ui/react/Field'
 import Checkbox from 'cozy-ui/react/Checkbox'
 import SelectBox from 'cozy-ui/react/SelectBox'
 import Empty from 'cozy-ui/react/Empty'
-import { templateQuery, templateLayer } from 'assets/template_input_query.js'
+import {
+  templateQuery,
+  templateLayer,
+  templateFunc
+} from 'assets/template_input_query.js'
 import { QUERIES_DOCTYPE } from 'doctypes'
 
 const CheckboxOption = require('cozy-ui/react/SelectBox').CheckboxOption
-const { Bold } = require('cozy-ui/react/Text')
 const md5 = require('md5.js')
 const {
   Tabs,
@@ -31,21 +36,36 @@ const optionsDataset = [
 ]
 
 const optionsConcept = [
-  { value: 'travail>paris', label: 'Travail à Paris' },
-  { value: 'travail>lille', label: 'Travail à Lille' },
-  { value: 'travail>saint-etienne', label: 'Travail à Saint-Etienne' },
-  { value: 'travail>rennes', label: 'Travail à Rennes' },
-  { value: 'manger>poisson', label: 'Mange du poisson' },
-  { value: 'aime>danse', label: 'Aime la danse' },
-  { value: 'manger>riz', label: 'Mange du riz' },
-  { value: 'manger>viande', label: 'Mange de la viande' },
-  { value: 'aime>foot', label: 'Aime le foot' },
-  { value: 'aime>peche', label: 'Aime la pêche' }
+  { value: 'diplome>cap', label: "Diplômé.e d'un CAP" },
+  { value: 'diplome>bac', label: 'Diplômé.e du BAC' },
+  { value: 'diplome>dut', label: "Diplômé.e d'un DUT" },
+  { value: 'diplome>licence', label: "Diplômé.e d'une licence" },
+  { value: 'diplome>master', label: "Diplômé.e d'un master" },
+  { value: 'diplome>ingenieur', label: 'Diplômé.e en inégnierie' },
+  { value: 'diplome>commerce', label: 'Diplômé.e en commerce' },
+  { value: 'diplome>doctorat', label: "Diplômé.e d'un doctorat" },
+  { value: 'imc>maigreur', label: 'IMC : Maigre' },
+  { value: 'imc>normal', label: 'IMC : Normal' },
+  { value: 'imc>surpoids', label: 'IMC : Surpoids' },
+  { value: 'imc>obesite-moderee', label: 'IMC : Obésité modérée' },
+  { value: 'imc>obesite-severe', label: 'IMC : Obésité sévère' },
+  { value: 'imc>obesite-morbide', label: 'IMC : Obésité morbide' },
+  { value: 'maladie>alzheimer', label: "Atteint d'Alzheimer" },
+  { value: 'maladie>cancer', label: "Atteint d'un cancer" },
+  { value: 'maladie>diabete', label: 'Atteint de diabète' },
+  { value: 'maladie>parkinson', label: "Atteint d'un Parkinson" },
+  { value: 'maladie>sida', label: 'Atteint du SIDA' },
+  { value: 'loc-travail>paris', label: 'Travail à Paris' },
+  { value: 'loc-travail>lille', label: 'Travail à Lille' },
+  { value: 'loc-travail>rennes', label: 'Travail à Rennes' },
+  { value: 'loc-travail>saint-etienne', label: 'Travail à Saint-Etienne' }
 ]
 
 const optionsTypeLayer = [
-  { label: 'Univariate (Map)', value: 'univariate-map' },
-  { label: 'Univariate (Reduce)', value: 'univariate-reduce' }
+  { label: 'Sum', value: 'sum' },
+  { label: 'Min', value: 'min' },
+  { label: 'Max', value: 'max' },
+  { label: 'Sum of squares', value: 'suare_sum' }
 ]
 
 const optionsLabels = [
@@ -71,13 +91,20 @@ function search(nameKey, myArray) {
   }
 }
 
-function buildInputQuery(localquery, isEncrypted, targetProfile, layers_da) {
+function buildInputQuery(
+  localquery,
+  isEncrypted,
+  targetProfile,
+  layers_da,
+  limit
+) {
   // This function is going to inject string into a stringified json imported from template_input_query
   var jsonConcept = ''
   var jsonLayers = ''
   var jsonPsdConcept = ''
   var jsonTargetProfile = targetProfile.split('"').join('\\"')
   var jsonLayerArgs = ''
+  var jsonFunc = ''
 
   // Extract an array of Concpets from the targetProfile
   var concepts = targetProfile
@@ -127,26 +154,55 @@ function buildInputQuery(localquery, isEncrypted, targetProfile, layers_da) {
 
   // build jsonLayers from layers_da
   i = 0
+  var j = 0
   while (i < layers_da.length) {
-    jsonLayerArgs =
-      '"keys":["' +
-      layers_da[i].layer_job.args.keys.split(',').join('","') +
-      '"]'
+    j = 0
+    jsonFunc = ''
 
-    // check if weight is specified. If yes, add it to jsonLayers
-    if (layers_da[i].layer_job.args.weight != null) {
+    // Build jsonFunc for each function
+    while (j < layers_da[i].layer_job.length) {
       jsonLayerArgs =
-        jsonLayerArgs + ',"weight":"' + layers_da[i].layer_job.args.weight + '"'
+        '"keys":["' +
+        layers_da[i].layer_job[j].args.keys
+          .split(' ')
+          .join('')
+          .split(',')
+          .join('","') +
+        '"]'
+
+      // check if weight is specified. If yes, add it to jsonLayers
+      if (
+        layers_da[i].layer_job[j].args.weight != null &&
+        layers_da[i].layer_job[j].args.weight != '' &&
+        layers_da[i].layer_job[j].args.weight != ' '
+      ) {
+        jsonLayerArgs =
+          jsonLayerArgs +
+          ',"weight":"' +
+          layers_da[i].layer_job[j].args.weight +
+          '"'
+      }
+
+      jsonFunc =
+        jsonFunc +
+        templateFunc
+          .replace('//FUNC//', layers_da[i].layer_job[j].func.value)
+          .replace('//ARGS//', jsonLayerArgs) +
+        ','
+
+      j++
     }
+    // Delete the final ',' from jsonFunc
+    jsonFunc = jsonFunc.substring(0, jsonFunc.length - 1)
 
     jsonLayers =
       jsonLayers +
       templateLayer
-        .replace('//FUNC//', layers_da[i].layer_job.func.value)
-        .replace('//ARGS//', jsonLayerArgs)
-        .replace('//SIZE//', layers_da[i].layer_size)
-    jsonLayers = jsonLayers + ','
-    i = i + 1
+        .replace('//FUNCS//', jsonFunc)
+        .replace('//SIZE//', layers_da[i].layer_size) +
+      ','
+
+    i++
   }
   // Delete the final ',' from jsonLayers
   jsonLayers = jsonLayers.substring(0, jsonLayers.length - 1)
@@ -159,6 +215,7 @@ function buildInputQuery(localquery, isEncrypted, targetProfile, layers_da) {
     .replace('//DOCTYPE//', localquery.value)
     .replace('//OPERATION//', jsonTargetProfile)
     .replace('//ENCRYPTED//', isEncrypted)
+    .replace('//LIMIT//', limit)
 
   // Remote body need to be map[string]string
   // It's an association between var name and value
@@ -173,7 +230,6 @@ export class NewQuery extends Component {
 
     // initial component state
     this.state = {
-      numberOfLayers: 2,
       selectedLayer: 1,
       localquery: {
         label: 'io.cozy.bank.operations',
@@ -181,38 +237,75 @@ export class NewQuery extends Component {
       },
       layers_da: [
         {
-          layer_job: {
-            func: { label: 'Univariate (Map)', value: 'univariate-map' },
-            args: { keys: 'amount' }
-          },
-          layer_size: 4
+          layer_job: [
+            {
+              func: { label: 'Sum', value: 'sum' },
+              args: { keys: 'amount', weight: '' }
+            }
+          ],
+          layer_size: 6
         },
         {
-          layer_job: {
-            func: { label: 'Univariate (Reduce)', value: 'univariate-reduce' },
-            args: {
-              keys: 'amount'
+          layer_job: [
+            {
+              func: { label: 'Sum', value: 'sum' },
+              args: {
+                weight: '',
+                keys: 'sum_amount'
+              }
+            },
+            {
+              func: { label: 'Sum', value: 'sum' },
+              args: {
+                weight: '',
+                keys: 'length'
+              }
             }
-          },
+          ],
           layer_size: 1
         }
       ],
       isEncrypted: false,
       labels: [{ label: 'Finance', value: 'finance' }],
+      limit: 1000,
       targetProfile:
-        'OR(OR("Travail à Paris"::"Travail à Lille"):OR("Travail à Saint-Etienne"::"Travail à Rennes"))',
+        'OR(OR("Atteint du SIDA"::"Atteint de diabète"):OR("Travail à Saint-Etienne"::"Travail à Rennes"))',
       isWorking: false,
       isFinished: false,
-      name: "Mean/Std/Min/Max of operations' amount",
+      name: "Sum of operations' amount",
       titleMsg: 'The query is running',
       msg: 'Go to "Saved Queries" to follow it'
+    }
+
+    this.demoState = this.state
+
+    this.state = {
+      selectedLayer: 1,
+      localquery: null,
+      layers_da: [
+        {
+          layer_job: [
+            {
+              args: []
+            }
+          ],
+          layer_size: 1
+        }
+      ],
+      isEncrypted: true,
+      labels: [],
+      limit: 1000,
+      targetProfile: '',
+      isWorking: false,
+      isFinished: false,
+      name: ''
     }
 
     this.initialState = this.state
   }
 
   demo = () => {
-    this.setState(() => this.initialState)
+    this.setState(() => this.demoState)
   }
 
   // create the new query
@@ -223,12 +316,14 @@ export class NewQuery extends Component {
       isEncrypted,
       targetProfile,
       labels,
+      limit,
       layers_da,
       name
     } = this.state
 
     // reset the input and display a spinner during the process
     this.setState(() => ({ isWorking: true, isFinished: false }))
+    var success = false
 
     // build the body of the http request
     try {
@@ -236,8 +331,10 @@ export class NewQuery extends Component {
         localquery,
         isEncrypted,
         targetProfile,
-        layers_da
+        layers_da,
+        limit
       )
+      success = true
     } catch (e) {
       this.setState(() => ({
         isWorking: false,
@@ -247,110 +344,154 @@ export class NewQuery extends Component {
       }))
     }
 
-    try {
-      client.stackClient
-        .fetchJSON('POST', '/remote/cc.cozycloud.dispers.query', body)
-        .then(async response => {
-          try {
-            await client.create(QUERIES_DOCTYPE, {
-              localquery: localquery,
-              isEncrypted: isEncrypted,
-              targetProfile: targetProfile,
-              labels: labelsToAdd,
-              layers_da: layers_da,
-              status: 'Running',
-              name: name,
-              queryid: response['query_id']
-            })
+    if (success) {
+      try {
+        client.stackClient
+          .fetchJSON('POST', '/remote/cc.cozycloud.dispers.query', body)
+          .then(async response => {
+            try {
+              await client.create(QUERIES_DOCTYPE, {
+                localquery: localquery,
+                isEncrypted: isEncrypted,
+                targetProfile: targetProfile,
+                labels: labelsToAdd,
+                layers_da: layers_da,
+                status: 'Running',
+                name: name,
+                queryid: response['query_id']
+              })
+              this.setState(() => ({
+                isWorking: false,
+                isFinished: true,
+                titleMsg: 'The query is running',
+                msg: 'Go to "Saved Queries" to follow it'
+              }))
+            } catch (err) {
+              this.setState(() => ({
+                isWorking: false,
+                isFinished: true,
+                titleMsg: 'Error while saving query on your database',
+                msg: err.toString()
+              }))
+            }
+          })
+          .catch(error => {
             this.setState(() => ({
               isWorking: false,
               isFinished: true,
-              titleMsg: 'The query is running',
-              msg: 'Go to "Saved Queries" to follow it'
+              titleMsg: 'Cozy-DISPERS returned an error',
+              msg: error.toString()
             }))
-          } catch (err) {
-            this.setState(() => ({
-              isWorking: false,
-              isFinished: true,
-              titleMsg: 'Error while saving query on your database',
-              msg: err.toString()
-            }))
-          }
-        })
-        .catch(error => {
-          this.setState(() => ({
-            isWorking: false,
-            isFinished: true,
-            titleMsg: 'Cozy-DISPERS returned an error',
-            msg: error.toString()
-          }))
-        })
-    } catch (e) {
+          })
+      } catch (e) {
+        this.setState(() => ({
+          isWorking: false,
+          isFinished: true,
+          titleMsg: 'Could not pass the request',
+          msg: e.toString()
+        }))
+      }
+
+      var labelsToAdd = []
+      labels.forEach(function(item) {
+        labelsToAdd.push(item.label)
+      })
+
+      // remove the spinner
       this.setState(() => ({
         isWorking: false,
         isFinished: true,
-        titleMsg: 'Could not pass the request',
-        msg: e.toString()
+        titleMsg: 'Requesting...',
+        msg: ''
       }))
     }
-
-    var labelsToAdd = []
-    labels.forEach(function(item) {
-      labelsToAdd.push(item.label)
-    })
-
-    // remove the spinner
-    this.setState(() => ({
-      isWorking: false,
-      isFinished: true,
-      titleMsg: 'Requesting...',
-      msg: ''
-    }))
   }
 
   reset = () => {
-    this.setState(() => ({
-      numberOfLayers: 1,
-      selectedLayer: 1,
-      localquery: null,
-      layers_da: [
-        {
-          layer_job: {
-            args: []
-          },
-          layer_size: 1
-        }
-      ],
-      isEncrypted: true,
-      labels: [],
-      targetProfile: '',
-      isWorking: false,
-      isFinished: false,
-      name: ''
-    }))
+    this.setState(() => this.initialState)
+  }
+
+  displayArgs = () => {
+    var out = []
+
+    try {
+      const { layers_da, selectedLayer } = this.state
+      const br = <br />
+      out.push(<Label htmlFor="func0">{'Aggregation function(s)'}</Label>)
+      for (
+        let idxJob = 0;
+        idxJob < layers_da[selectedLayer - 1].layer_job.length;
+        idxJob++
+      ) {
+        out.push(
+          <InputGroup
+            prepend={
+              <SelectBox
+                inset
+                options={optionsTypeLayer}
+                className="u-w-4"
+                placeholder="Select ..."
+                value={layers_da[selectedLayer - 1].layer_job[idxJob].func}
+                onChange={event => {
+                  const { selectedLayer, layers_da } = this.state
+                  layers_da[selectedLayer - 1].layer_job[idxJob].func = event
+                  this.setState({ layers_da: layers_da })
+                }}
+              />
+            }
+            id={'func' + idxJob}
+            append={
+              <Input
+                placeholder="Weight"
+                value={
+                  layers_da[selectedLayer - 1].layer_job[idxJob].args.weight
+                }
+                onChange={event => {
+                  var { selectedLayer, layers_da } = this.state
+                  layers_da[selectedLayer - 1].layer_job[idxJob].args.weight =
+                    event.target.value
+                  this.setState({ layers_da: layers_da })
+                }}
+              />
+            }
+          >
+            <Input
+              value={layers_da[selectedLayer - 1].layer_job[idxJob].args.keys}
+              placeholder="Keys"
+              onChange={event => {
+                var { selectedLayer, layers_da } = this.state
+                layers_da[selectedLayer - 1].layer_job[idxJob].args.keys =
+                  event.target.value
+                this.setState({ layers_da: layers_da })
+              }}
+            />
+          </InputGroup>
+        )
+        out.push(br)
+      }
+      return out
+    } catch (e) {
+      alert(e)
+    }
   }
 
   render() {
     const {
       localquery,
       layers_da,
-      numberOfLayers,
       selectedLayer,
       isEncrypted,
       targetProfile,
       isWorking,
       isFinished,
+      limit,
       labels,
       name,
       titleMsg,
       msg
     } = this.state
 
-    const isLastLayer = selectedLayer == numberOfLayers
-
-    while (layers_da.length < numberOfLayers) {
-      layers_da.push({ layer_job: {}, layer_size: 1 })
-    }
+    const isLastLayer = selectedLayer == layers_da.length
 
     return (
       <div>
@@ -369,7 +510,7 @@ export class NewQuery extends Component {
               <p>
                 <ButtonAction
                   label="Demo"
-                  rightIcon="openwith"
+                  rightIcon="new"
                   onClick={this.demo}
                 />
                 <ButtonAction
@@ -389,6 +530,10 @@ export class NewQuery extends Component {
                 </TabList>
                 <TabPanels>
                   <TabPanel name="targets">
+                    <Infos
+                      text="Use the list of available concepts to help you build your target profile"
+                      icon="info"
+                    />
                     <Field
                       id="idField"
                       label="Target Profile"
@@ -404,6 +549,8 @@ export class NewQuery extends Component {
                       <Icon icon="cozy" /> Available Concepts
                     </Label>
                     <SelectBox options={optionsConcept} id="idConcepts" />
+                    <br />
+                    <br />
                   </TabPanel>
                   <TabPanel name="t">
                     <Field
@@ -416,40 +563,102 @@ export class NewQuery extends Component {
                       options={optionsDataset}
                       placeholder="Select ..."
                     />
+
+                    <Label htmlFor="limit" style={{ marginRight: '3px' }}>
+                      Maximum of values retrieved from each Cozy
+                    </Label>
+                    <Input
+                      id="limit"
+                      type="number"
+                      onChange={event => {
+                        this.setState({ limit: event.target.value })
+                      }}
+                      value={limit}
+                      min="1"
+                      max="1000000"
+                      step="1"
+                    />
                   </TabPanel>
                   <TabPanel name="da">
                     <p>
-                      <Label htmlFor="idNumberlayer">Number of layers</Label>
-                      <Input
-                        type="number"
-                        placeholder="Select..."
-                        id="idNumberlayer"
-                        value={numberOfLayers}
-                        onChange={event => {
-                          this.setState({ numberOfLayers: event.target.value })
+                      <Chip theme="primary">
+                        <Icon icon="stack" style={{ marginRight: '0.5rem' }} />
+                        {layers_da.length} layer(s) in total
+                      </Chip>
+                      <ButtonAction
+                        label="Add layer"
+                        rightIcon="plus"
+                        onClick={() => {
+                          var { layers_da } = this.state
+                          layers_da.push({
+                            layer_job: [
+                              {
+                                args: []
+                              }
+                            ],
+                            layer_size: 1
+                          })
+                          this.setState({
+                            layers_da: layers_da
+                          })
                         }}
-                        min="1"
-                        max="100"
-                        step="1"
+                      />
+                      <ButtonAction
+                        type="error"
+                        label="Remove last layer"
+                        onClick={() => {
+                          var { layers_da, selectedLayer } = this.state
+                          if (selectedLayer == layers_da.length) {
+                            selectedLayer = selectedLayer - 1
+                          }
+                          layers_da.splice(-1, 1)
+                          this.setState({
+                            layers_da: layers_da,
+                            selectedLayer: selectedLayer
+                          })
+                        }}
+                        rightIcon="file-none"
                       />
                     </p>
                     <Card>
-                      <p>
-                        <Label htmlFor="idNumberlayer">Select layer</Label>
-                        <Input
-                          type="number"
-                          placeholder="Select..."
-                          id="idNumberlayer"
-                          value={selectedLayer}
-                          onChange={event => {
-                            this.setState({ selectedLayer: event.target.value })
-                          }}
-                          min="0"
-                          max={numberOfLayers}
-                          step="1"
-                        />
-                      </p>
-                      <Label htmlFor="layer">Size</Label>
+                      <center>
+                        <p>
+                          <div>
+                            <Chip.Button
+                              variant="outlined"
+                              onClick={() => {
+                                var { selectedLayer } = this.state
+                                if (selectedLayer > 1) {
+                                  selectedLayer = selectedLayer - 1
+                                }
+                                this.setState({ selectedLayer: selectedLayer })
+                              }}
+                            >
+                              <Icon icon="left" />
+                            </Chip.Button>
+                            <Chip>
+                              <Icon
+                                icon="stack"
+                                style={{ marginRight: '0.5rem' }}
+                              />
+                              Layer {selectedLayer}
+                            </Chip>
+                            <Chip.Button
+                              variant="outlined"
+                              onClick={() => {
+                                var { selectedLayer, layers_da } = this.state
+                                if (selectedLayer < layers_da.length) {
+                                  selectedLayer = selectedLayer + 1
+                                }
+                                this.setState({ selectedLayer: selectedLayer })
+                              }}
+                            >
+                              <Icon icon="right" />
+                            </Chip.Button>
+                          </div>
+                        </p>
+                      </center>
+                      <Label htmlFor="layer">Parallel computation</Label>
                       <Input
                         type="number"
                         id="layer"
@@ -464,51 +673,37 @@ export class NewQuery extends Component {
                         max={isLastLayer ? 1 : 100}
                         step="1"
                       />
-                      <Field
-                        label="Aggregation Function"
-                        type="select"
-                        options={optionsTypeLayer}
-                        placeholder="Select ..."
-                        value={layers_da[selectedLayer - 1].layer_job.func}
-                        onChange={event => {
-                          const { selectedLayer, layers_da } = this.state
-                          layers_da[selectedLayer - 1].layer_job.func = event
-                          this.setState({ layers_da: layers_da })
+                      <br />
+                      <br />
+
+                      {this.displayArgs()}
+
+                      <br />
+                      <ButtonAction
+                        label="Add function"
+                        rightIcon="plus"
+                        onClick={() => {
+                          var { layers_da, selectedLayer } = this.state
+                          layers_da[selectedLayer - 1].layer_job.push({
+                            args: []
+                          })
+                          this.setState({
+                            layers_da: layers_da
+                          })
                         }}
                       />
-                      <InputGroup
-                        prepend={<Bold className="u-pl-1">Keys </Bold>}
-                      >
-                        <Input
-                          placeholder="Value"
-                          value={
-                            layers_da[selectedLayer - 1].layer_job.args.keys
-                          }
-                          onChange={event => {
-                            var { selectedLayer, layers_da } = this.state
-                            layers_da[selectedLayer - 1].layer_job.args.keys =
-                              event.target.value
-                            this.setState({ layers_da: layers_da })
-                          }}
-                        />
-                      </InputGroup>
-                      <br />
-                      <InputGroup
-                        prepend={<Bold className="u-pl-1">Weight </Bold>}
-                      >
-                        <Input
-                          placeholder="Value"
-                          value={
-                            layers_da[selectedLayer - 1].layer_job.args.weight
-                          }
-                          onChange={event => {
-                            var { selectedLayer, layers_da } = this.state
-                            layers_da[selectedLayer - 1].layer_job.args.weight =
-                              event.target.value
-                            this.setState({ layers_da: layers_da })
-                          }}
-                        />
-                      </InputGroup>
+                      <ButtonAction
+                        type="error"
+                        rightIcon="trash"
+                        label="Remove last function"
+                        onClick={() => {
+                          var { layers_da, selectedLayer } = this.state
+                          layers_da[selectedLayer - 1].layer_job.splice(-1, 1)
+                          this.setState({
+                            layers_da: layers_da
+                          })
+                        }}
+                      />
                     </Card>
                   </TabPanel>
                   <TabPanel name="general">
