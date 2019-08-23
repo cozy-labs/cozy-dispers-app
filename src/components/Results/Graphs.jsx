@@ -9,7 +9,7 @@ export class StepDurations extends Component {
   }
 
   render() {
-    return <canvas ref={this.Canvas} width="300" height="250"></canvas>
+    return <canvas ref={this.Canvas} width="200" height="150"></canvas>
   }
 
   componentDidMount() {
@@ -81,7 +81,7 @@ export class TimeDistribution extends Component {
   }
 
   render() {
-    return <canvas ref={this.Camembert} width="400" height="400"></canvas>
+    return <canvas ref={this.Camembert} width="150" height="150"></canvas>
   }
 
   componentDidMount() {
