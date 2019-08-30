@@ -412,12 +412,12 @@ export class NewQuery extends Component {
 
     try {
       const { layers_da, selectedLayer } = this.state
+      out.push(<Label htmlFor="func0">{'Aggregation function(s)'}</Label>)
       out.push(
-        <Label htmlFor="func0">
-          {
-            'Aggregation function(s) (Ordered from the first executed to the last one)'
-          }
-        </Label>
+        <Infos
+          text="Ordered from the first executed to the last one"
+          icon="info"
+        />
       )
       for (
         let idxJob = 0;
@@ -592,7 +592,12 @@ export class NewQuery extends Component {
                         rightIcon="file-none"
                       />
                     </p>
-                    <Card>
+                    <Card
+                      style={{
+                        marginLeft: '10%',
+                        marginRight: '10%'
+                      }}
+                    >
                       <center>
                         <p>
                           <div>
