@@ -13,7 +13,8 @@ const BLUE = '#2d8af2'
 export const Home = () => {
   let styles = {
     marginLeft: '20%',
-    marginRight: '20%'
+    marginRight: '20%',
+    marginTop: '100px'
   }
 
   return (
@@ -52,7 +53,6 @@ export const Home = () => {
           </Section>
         </Sections>
       </Hero>
-      <br />
 
       <div align="left" style={styles}>
         <Card>

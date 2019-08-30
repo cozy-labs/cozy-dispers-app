@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
 
+import AggregationFunction from './AggregationFunction'
+
 import { withClient } from 'cozy-client'
 import Input from 'cozy-ui/react/Input'
 import Icon from 'cozy-ui/react/Icon'
-import InputGroup from 'cozy-ui/react/InputGroup'
+import Accordion from 'cozy-ui/react/Accordion'
 import Label from 'cozy-ui/react/Label'
 import Infos from 'cozy-ui/react/Infos'
 import Button from 'cozy-ui/react/Button'
@@ -59,13 +61,6 @@ const optionsConcept = [
   { value: 'loc-travail>lille', label: 'Travail à Lille' },
   { value: 'loc-travail>rennes', label: 'Travail à Rennes' },
   { value: 'loc-travail>saint-etienne', label: 'Travail à Saint-Etienne' }
-]
-
-const optionsTypeLayer = [
-  { label: 'Sum', value: 'sum' },
-  { label: 'Min', value: 'min' },
-  { label: 'Max', value: 'max' },
-  { label: 'Sum of squares', value: 'suare_sum' }
 ]
 
 const optionsLabels = [
@@ -251,11 +246,11 @@ export class NewQuery extends Component {
               func: { label: 'Sum', value: 'sum' },
               args: {
                 weight: '',
-                keys: 'sum_amount'
+                keys: 'sum_amount, length'
               }
             },
             {
-              func: { label: 'Sum', value: 'sum' },
+              func: { label: 'TODO : Mean', value: 'sum' },
               args: {
                 weight: '',
                 keys: 'length'
@@ -286,7 +281,8 @@ export class NewQuery extends Component {
         {
           layer_job: [
             {
-              args: []
+              func: { label: '', value: '' },
+              args: {}
             }
           ],
           layer_size: 1
@@ -416,58 +412,34 @@ export class NewQuery extends Component {
 
     try {
       const { layers_da, selectedLayer } = this.state
-      const br = <br />
-      out.push(<Label htmlFor="func0">{'Aggregation function(s)'}</Label>)
+      out.push(
+        <Label htmlFor="func0">
+          {
+            'Aggregation function(s) (Ordered from the first executed to the last one)'
+          }
+        </Label>
+      )
       for (
         let idxJob = 0;
         idxJob < layers_da[selectedLayer - 1].layer_job.length;
         idxJob++
       ) {
         out.push(
-          <InputGroup
-            prepend={
-              <SelectBox
-                inset
-                options={optionsTypeLayer}
-                className="u-w-4"
-                placeholder="Select ..."
-                value={layers_da[selectedLayer - 1].layer_job[idxJob].func}
-                onChange={event => {
-                  const { selectedLayer, layers_da } = this.state
-                  layers_da[selectedLayer - 1].layer_job[idxJob].func = event
-                  this.setState({ layers_da: layers_da })
-                }}
-              />
-            }
+          <AggregationFunction
             id={'func' + idxJob}
-            append={
-              <Input
-                placeholder="Weight"
-                value={
-                  layers_da[selectedLayer - 1].layer_job[idxJob].args.weight
-                }
-                onChange={event => {
-                  var { selectedLayer, layers_da } = this.state
-                  layers_da[selectedLayer - 1].layer_job[idxJob].args.weight =
-                    event.target.value
-                  this.setState({ layers_da: layers_da })
-                }}
-              />
-            }
-          >
-            <Input
-              value={layers_da[selectedLayer - 1].layer_job[idxJob].args.keys}
-              placeholder="Keys"
-              onChange={event => {
-                var { selectedLayer, layers_da } = this.state
-                layers_da[selectedLayer - 1].layer_job[idxJob].args.keys =
-                  event.target.value
+            json={layers_da[selectedLayer - 1].layer_job[idxJob]}
+            onChange={(func, args) => {
+              try {
+                var { layers_da } = this.state
+                layers_da[selectedLayer - 1].layer_job[idxJob].func = func
+                layers_da[selectedLayer - 1].layer_job[idxJob].args = args
                 this.setState({ layers_da: layers_da })
-              }}
-            />
-          </InputGroup>
+              } catch (e) {
+                alert(e)
+              }
+            }}
+          />
         )
-        out.push(br)
       }
       return out
     } catch (e) {
@@ -676,7 +648,7 @@ export class NewQuery extends Component {
                       <br />
                       <br />
 
-                      {this.displayArgs()}
+                      <Accordion>{this.displayArgs()}</Accordion>
 
                       <br />
                       <ButtonAction
@@ -685,6 +657,7 @@ export class NewQuery extends Component {
                         onClick={() => {
                           var { layers_da, selectedLayer } = this.state
                           layers_da[selectedLayer - 1].layer_job.push({
+                            func: { label: '', value: '' },
                             args: []
                           })
                           this.setState({
