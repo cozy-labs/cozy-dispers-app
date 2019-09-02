@@ -61,9 +61,15 @@ export const Home = () => {
         </Card>
         <br />
         <Card>
+          <h2>Parallel computing</h2>
+          <img src="schema_dispers_parellel.png" width="100%"></img>
+        </Card>
+        <br />
+        <Card>
           <h2>The entire process</h2>
           <img src="schema_dispers_extended_mm.png" width="100%"></img>
         </Card>
+
         <br />
         <Card>
           <SubTitle className="u-mb-1">Docs Cozy-DISPERS</SubTitle>
