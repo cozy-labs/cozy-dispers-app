@@ -3,19 +3,20 @@ import React, { Component } from 'react'
 import AggregationFunction from './AggregationFunction'
 
 import { withClient } from 'cozy-client'
-import Input from 'cozy-ui/react/Input'
-import Icon from 'cozy-ui/react/Icon'
 import Accordion from 'cozy-ui/react/Accordion'
-import Label from 'cozy-ui/react/Label'
-import Infos from 'cozy-ui/react/Infos'
 import Button from 'cozy-ui/react/Button'
 import ButtonAction from 'cozy-ui/react/ButtonAction'
 import Card from 'cozy-ui/react/Card'
-import Chip from 'cozy-ui/react/Chip'
-import Field from 'cozy-ui/react/Field'
 import Checkbox from 'cozy-ui/react/Checkbox'
-import SelectBox from 'cozy-ui/react/SelectBox'
+import Chip from 'cozy-ui/react/Chip'
 import Empty from 'cozy-ui/react/Empty'
+import Field from 'cozy-ui/react/Field'
+import Label from 'cozy-ui/react/Label'
+import Icon from 'cozy-ui/react/Icon'
+import Infos from 'cozy-ui/react/Infos'
+import Input from 'cozy-ui/react/Input'
+import InputGroup from 'cozy-ui/react/InputGroup'
+import SelectBox from 'cozy-ui/react/SelectBox'
 import {
   templateQuery,
   templateLayer,
@@ -78,14 +79,6 @@ const styles = {
   }
 }
 
-function search(nameKey, myArray) {
-  for (var i = 0; i < myArray.length; i++) {
-    if (myArray[i].label === nameKey) {
-      return myArray[i]
-    }
-  }
-}
-
 function buildInputQuery(
   localquery,
   isEncrypted,
@@ -122,8 +115,8 @@ function buildInputQuery(
   var conceptID
   var conceptPseudoAnonymized
   while (i < concepts.length) {
-    // e.g. concepts[i]="Work in Paris" conceptID="work>Paris"
-    conceptID = search(concepts[i], optionsConcept).value
+    // e.g. concepts[i]=conceptID="work>Paris"
+    conceptID = concepts[i]
     conceptPseudoAnonymized = new md5().update('concepts' + i).digest('hex')
 
     // Add concept to jsonConcept
@@ -266,8 +259,22 @@ export class NewQuery extends Component {
       isEncrypted: false,
       labels: [{ label: 'Finance', value: 'finance' }],
       limit: 1000,
+      tabTargetProfile: [
+        'OR(',
+        'OR(',
+        'loc-travail>paris',
+        ':',
+        'loc-travail>lille',
+        ')',
+        'OR(',
+        'loc-travail>saint-etienne',
+        ':',
+        'loc-travail>rennes',
+        ')',
+        ')'
+      ],
       targetProfile:
-        'OR(OR(Atteint du SIDA:Atteint de diabète)OR(Travail à Saint-Etienne:Travail à Rennes))',
+        'OR(OR(loc-travail>paris:loc-travail>lille)OR(loc-travail>saint-etienne:loc-travail>rennes))',
       isWorking: false,
       isFinished: false,
       name: "Sum of operations' amount",
@@ -286,6 +293,7 @@ export class NewQuery extends Component {
           layer_size: 1
         }
       ],
+      tabTargetProfile: [],
       isEncrypted: true,
       labels: [],
       limit: 1000,
@@ -456,6 +464,7 @@ export class NewQuery extends Component {
       isWorking,
       isFinished,
       limit,
+      conceptSelector,
       labels,
       name,
       titleMsg,
@@ -502,24 +511,123 @@ export class NewQuery extends Component {
                 <TabPanels>
                   <TabPanel name="targets">
                     <Infos
-                      text="Pro-tips : Use the list of available concepts to build your target profile"
+                      title="How to build your target profile"
                       icon="info"
+                      text="Use the following tools to create your target profile. Example of TP
+                      : OR(maladie>sida:maladie>diabete)"
                     />
-                    <Field
-                      id="idField"
-                      label="Target Profile"
-                      type="textarea"
-                      value={targetProfile}
-                      placeholder="Select..."
-                      onChange={event => {
-                        this.setState({ targetProfile: event.target.value })
+
+                    <div>
+                      <Button
+                        label="And("
+                        type="button"
+                        theme="secondary"
+                        onClick={() => {
+                          var { tabTargetProfile } = this.state
+                          tabTargetProfile.push('AND(')
+                          this.setState({
+                            tabTargetProfile: tabTargetProfile,
+                            targetProfile: tabTargetProfile.join('')
+                          })
+                        }}
+                      />
+                      <Button
+                        label="Or("
+                        type="button"
+                        theme="secondary"
+                        onClick={() => {
+                          var { tabTargetProfile } = this.state
+                          tabTargetProfile.push('OR(')
+                          this.setState({
+                            tabTargetProfile: tabTargetProfile,
+                            targetProfile: tabTargetProfile.join('')
+                          })
+                        }}
+                      />
+                      <Button
+                        label=":"
+                        type="button"
+                        theme="secondary"
+                        onClick={() => {
+                          var { tabTargetProfile } = this.state
+                          tabTargetProfile.push(':')
+                          this.setState({
+                            tabTargetProfile: tabTargetProfile,
+                            targetProfile: tabTargetProfile.join('')
+                          })
+                        }}
+                      />
+                      <Button
+                        label=")"
+                        type="button"
+                        theme="secondary"
+                        onClick={() => {
+                          var { tabTargetProfile } = this.state
+                          tabTargetProfile.push(')')
+                          this.setState({
+                            tabTargetProfile: tabTargetProfile,
+                            targetProfile: tabTargetProfile.join('')
+                          })
+                        }}
+                      />
+                      <Button
+                        label="DEL"
+                        type="button"
+                        icon="previous"
+                        theme="danger-outline"
+                        onClick={() => {
+                          var { tabTargetProfile } = this.state
+                          tabTargetProfile.splice(-1, 1)
+                          this.setState({
+                            tabTargetProfile: tabTargetProfile,
+                            targetProfile: tabTargetProfile.join('')
+                          })
+                        }}
+                      />
+                    </div>
+                    <br />
+                    <div>
+                      <InputGroup
+                        append={
+                          <Button
+                            label="Add"
+                            type="button"
+                            onClick={() => {
+                              const { conceptSelector } = this.state
+                              var {
+                                tabTargetProfile,
+                                targetProfile
+                              } = this.state
+                              tabTargetProfile.push(conceptSelector.value)
+                              this.setState({
+                                tabTargetProfile: tabTargetProfile,
+                                targetProfile: tabTargetProfile.join('')
+                              })
+                            }}
+                          />
+                        }
+                      >
+                        <SelectBox
+                          value={conceptSelector}
+                          onChange={event => {
+                            this.setState({ conceptSelector: event })
+                          }}
+                          options={optionsConcept}
+                          id="idConcepts"
+                        />
+                      </InputGroup>
+                    </div>
+                    <br />
+                    <br />
+
+                    <p
+                      style={{
+                        fontSize: 40 + 150 / (targetProfile.length + 1) + 'pt'
                       }}
-                      size="medium"
-                    />
-                    <Label htmlFor="idConcepts" style={{ marginRight: '3px' }}>
-                      <Icon icon="cozy" /> Available Concepts
-                    </Label>
-                    <SelectBox options={optionsConcept} id="idConcepts" />
+                    >
+                      {targetProfile}
+                    </p>
+
                     <br />
                     <br />
                   </TabPanel>
