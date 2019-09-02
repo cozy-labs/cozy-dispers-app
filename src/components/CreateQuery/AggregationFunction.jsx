@@ -9,7 +9,7 @@ const optionsTypeLayer = [
   { label: 'Sum', value: 'sum' },
   { label: 'Min', value: 'min' },
   { label: 'Max', value: 'max' },
-  { label: 'Sum of squares', value: 'square_sum' }
+  { label: 'Sum of squares', value: 'sum_square' }
 ]
 
 export class AggregationFunction extends Component {
@@ -18,9 +18,9 @@ export class AggregationFunction extends Component {
     this.state = this.props
   }
 
-  onChange(func, args) {
+  onChange(func, args, title) {
     if (this.props.onChange) {
-      this.props.onChange(func, args)
+      this.props.onChange(func, args, title)
     }
   }
 
@@ -38,7 +38,7 @@ export class AggregationFunction extends Component {
             options={optionsTypeLayer}
             value={json.func}
             onChange={event => {
-              this.onChange(event, this.props.json.args)
+              this.onChange(event, this.props.json.args, '')
             }}
             placeholder="Select ..."
           />
@@ -47,7 +47,7 @@ export class AggregationFunction extends Component {
 
       switch (json.func.value) {
         case 'sum':
-        case 'squared_sum':
+        case 'sum_square':
           out.push(
             <div>
               <p>
@@ -60,8 +60,24 @@ export class AggregationFunction extends Component {
                   value={json.args.keys}
                   onChange={event => {
                     var args = this.props.json.args
+                    var title = ''
                     args.keys = event.target.value
-                    this.onChange(this.props.json.func, args)
+                    if (
+                      args.weight == null ||
+                      args.weight == '' ||
+                      args.weight.length < 2
+                    ) {
+                      title = this.props.json.func.label + '(' + args.keys + ')'
+                    } else {
+                      title =
+                        this.props.json.func.label +
+                        '((' +
+                        args.keys +
+                        ')*' +
+                        args.weight +
+                        ')'
+                    }
+                    this.onChange(this.props.json.func, args, title)
                   }}
                 />
               </p>
@@ -75,8 +91,24 @@ export class AggregationFunction extends Component {
                   value={json.args.weight}
                   onChange={event => {
                     var args = this.props.json.args
+                    var title = ''
                     args.weight = event.target.value
-                    this.onChange(this.props.json.func, args)
+                    if (
+                      args.weight == null ||
+                      args.weight == '' ||
+                      args.weight.length < 2
+                    ) {
+                      title = this.props.json.func.label + '(' + args.keys + ')'
+                    } else {
+                      title =
+                        this.props.json.func.label +
+                        '((' +
+                        args.keys +
+                        ')*' +
+                        args.weight +
+                        ')'
+                    }
+                    this.onChange(this.props.json.func, args, title)
                   }}
                 />
               </p>
@@ -87,10 +119,23 @@ export class AggregationFunction extends Component {
         case 'max':
           out.push(
             <div>
-              <Label htmlFor="inputkey" block={false}>
-                {'Key(s)'}
-              </Label>
-              <Input id="inputkey" placeholder="Choose a key..." />
+              <p>
+                <Label htmlFor="inputkey" block={false}>
+                  Weight
+                </Label>
+                <Input
+                  id="inputkey"
+                  placeholder="Choose a key..."
+                  value={json.args.weight}
+                  onChange={event => {
+                    var args = this.props.json.args
+                    var title = ''
+                    args.keys = event.target.value
+                    title = this.props.json.func.label + '(' + args.keys + ')'
+                    this.onChange(this.props.json.func, args, title)
+                  }}
+                />
+              </p>
             </div>
           )
           break
@@ -122,8 +167,8 @@ export class AggregationFunction extends Component {
     return (
       <AccordionItem
         label={
-          (json.func.label == '' && 'Please choose a function...') ||
-          json.func.label
+          (json.title == '' && 'Please choose a function...') ||
+          json.title.toUpperCase()
         }
       >
         {out}

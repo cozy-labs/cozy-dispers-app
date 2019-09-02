@@ -35,32 +35,7 @@ function displayFuncs(training, indexLayer) {
     var i = 0
     var out = []
     while (i < training.layers_da[indexLayer].layer_job.length) {
-      if (
-        training.layers_da[indexLayer].layer_job[i].args.weight != null &&
-        training.layers_da[indexLayer].layer_job[i].args.weight != '' &&
-        training.layers_da[indexLayer].layer_job[i].args.weight != ' '
-      ) {
-        out.push(
-          <p>
-            {training.layers_da[indexLayer].layer_job[i].func.label} of{' '}
-            {JSON.stringify(
-              training.layers_da[indexLayer].layer_job[i].args.keys
-            )}{' '}
-            with {training.layers_da[indexLayer].layer_job[i].args.weight} as
-            weight
-          </p>
-        )
-      } else {
-        out.push(
-          <p>
-            {training.layers_da[indexLayer].layer_job[i].func.label} of{' '}
-            {JSON.stringify(
-              training.layers_da[indexLayer].layer_job[i].args.keys
-            )}
-          </p>
-        )
-      }
-
+      out.push(<p>{training.layers_da[indexLayer].layer_job[i].title}</p>)
       i++
     }
     return out

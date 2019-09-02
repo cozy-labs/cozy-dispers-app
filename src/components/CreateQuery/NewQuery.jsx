@@ -234,8 +234,17 @@ export class NewQuery extends Component {
         {
           layer_job: [
             {
+              title: 'SUM(AMOUNT)',
               func: { label: 'Sum', value: 'sum' },
               args: { keys: 'amount', weight: '' }
+            },
+            {
+              title: 'SUM OF SQUARES(AMOUNT)',
+              func: { label: 'Sum of squares', value: 'sum_square' },
+              args: {
+                weight: '',
+                keys: 'amount'
+              }
             }
           ],
           layer_size: 6
@@ -243,17 +252,11 @@ export class NewQuery extends Component {
         {
           layer_job: [
             {
+              title: 'SUM(SUM_AMOUNT, SUM_SQUARE_AMOUNT, LENGTH)',
               func: { label: 'Sum', value: 'sum' },
               args: {
                 weight: '',
-                keys: 'sum_amount, length'
-              }
-            },
-            {
-              func: { label: 'TODO : Mean', value: 'sum' },
-              args: {
-                weight: '',
-                keys: 'length'
+                keys: 'sum_amount, sum_square_amount, length'
               }
             }
           ],
@@ -279,12 +282,7 @@ export class NewQuery extends Component {
       localquery: null,
       layers_da: [
         {
-          layer_job: [
-            {
-              func: { label: '', value: '' },
-              args: {}
-            }
-          ],
+          layer_job: [{ title: '', func: { label: '', value: '' }, args: {} }],
           layer_size: 1
         }
       ],
@@ -428,9 +426,10 @@ export class NewQuery extends Component {
           <AggregationFunction
             id={'func' + idxJob}
             json={layers_da[selectedLayer - 1].layer_job[idxJob]}
-            onChange={(func, args) => {
+            onChange={(func, args, title) => {
               try {
                 var { layers_da } = this.state
+                layers_da[selectedLayer - 1].layer_job[idxJob].title = title
                 layers_da[selectedLayer - 1].layer_job[idxJob].func = func
                 layers_da[selectedLayer - 1].layer_job[idxJob].args = args
                 this.setState({ layers_da: layers_da })
@@ -594,8 +593,8 @@ export class NewQuery extends Component {
                     </p>
                     <Card
                       style={{
-                        marginLeft: '10%',
-                        marginRight: '10%'
+                        marginLeft: '20%',
+                        marginRight: '20%'
                       }}
                     >
                       <center>
@@ -662,7 +661,8 @@ export class NewQuery extends Component {
                         onClick={() => {
                           var { layers_da, selectedLayer } = this.state
                           layers_da[selectedLayer - 1].layer_job.push({
-                            func: { label: '', value: '' },
+                            title: '',
+                            func: { title: '', label: '', value: '' },
                             args: []
                           })
                           this.setState({
