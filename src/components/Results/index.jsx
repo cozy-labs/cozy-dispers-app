@@ -33,7 +33,6 @@ export const Results = props => {
           <div>
             {isThereData ? (
               <div>
-                <h1>Your queries</h1>
                 <MLList queries={data} />
               </div>
             ) : (

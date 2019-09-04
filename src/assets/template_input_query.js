@@ -8,9 +8,9 @@ const templateQuery = `{
         "_id": {
           "$gt": null
         }
-      },
-      "limit": //LIMIT//
+      }
     },
+    "limit": //LIMIT//,
     "doctype": "//DOCTYPE//",
 		"index": {
 		"fields": [
