@@ -358,7 +358,6 @@ export class NewQuery extends Component {
                 targetProfile: targetProfile,
                 labels: labelsToAdd,
                 layers_da: layers_da,
-                status: 'Running',
                 name: name,
                 queryid: response['query_id']
               })

@@ -158,21 +158,25 @@ export class ViewModal extends Component {
                         </th>
                         <th>{training.localquery.value}</th>
                       </tr>
-                      <tr>
-                        <th>
-                          <b>Duration :</b>{' '}
-                        </th>
-                        <th>
-                          {(new Date(
-                            training.state.ExecutionMetadata.end
-                          ).getTime() -
-                            new Date(
-                              training.state.ExecutionMetadata.start
-                            ).getTime()) /
-                            1000}
-                          s
-                        </th>
-                      </tr>
+                      {new Date(
+                        training.state.ExecutionMetadata.end
+                      ).getTime() != -62135596800000 && (
+                        <tr>
+                          <th>
+                            <b>Duration :</b>{' '}
+                          </th>
+                          <th>
+                            {(new Date(
+                              training.state.ExecutionMetadata.end
+                            ).getTime() -
+                              new Date(
+                                training.state.ExecutionMetadata.start
+                              ).getTime()) /
+                              1000}
+                            s
+                          </th>
+                        </tr>
+                      )}
                     </table>
                   </center>
                   <br />
@@ -211,9 +215,44 @@ export class ViewModal extends Component {
                       })(training)}
                     </TabPanel>
                     <TabPanel name="exe">
-                      <StepDurations training={training}></StepDurations>
+                      {(training => {
+                        var out = []
+                        const br = <br />
+                        for (var task in training.state.ExecutionMetadata
+                          .tasks) {
+                          if (
+                            training.state.ExecutionMetadata.tasks[task]
+                              .error != null &&
+                            training.state.ExecutionMetadata.tasks[task]
+                              .error != ''
+                          ) {
+                            out.push(
+                              <Chip theme="error" variant="outlined">
+                                {
+                                  training.state.ExecutionMetadata.tasks[task]
+                                    .error
+                                }
+                              </Chip>
+                            )
+                          }
+                        }
+
+                        return out
+                      })(training)}
+
+                      {new Date(
+                        training.state.ExecutionMetadata.end
+                      ).getTime() != -62135596800000 && (
+                        <StepDurations training={training}></StepDurations>
+                      )}
                       <br />
-                      <TimeDistribution training={training}></TimeDistribution>
+                      {new Date(
+                        training.state.ExecutionMetadata.end
+                      ).getTime() != -62135596800000 && (
+                        <TimeDistribution
+                          training={training}
+                        ></TimeDistribution>
+                      )}
                     </TabPanel>
                     <TabPanel name="res">
                       <form>
@@ -222,6 +261,7 @@ export class ViewModal extends Component {
                             try {
                               var out = []
                               const br = <br />
+
                               for (var res in training.state.Results) {
                                 out.push(
                                   <FigureBlock

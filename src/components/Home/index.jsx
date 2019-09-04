@@ -19,8 +19,6 @@ export const Home = () => {
 
   return (
     <div className="todos">
-      <h1>Cozy-DISPERS</h1>
-
       <Hero>
         <Title>Discover the statistic app that respects your privacy</Title>
         <Sections>
