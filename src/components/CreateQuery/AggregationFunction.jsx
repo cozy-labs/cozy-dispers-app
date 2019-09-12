@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { AccordionItem } from 'cozy-ui/react/Accordion'
 import Field from 'cozy-ui/react/Field'
 import Label from 'cozy-ui/react/Label'
+import Infos from 'cozy-ui/react/Infos'
 
 const Input = require('cozy-ui/react/Input').default
 
@@ -9,6 +10,8 @@ const optionsTypeLayer = [
   { label: 'Sum', value: 'sum' },
   { label: 'Min', value: 'min' },
   { label: 'Max', value: 'max' },
+  { label: 'Standard Deviation', value: 'standard_deviation' },
+  { label: 'Mean', value: 'mean' },
   { label: 'Sum of squares', value: 'sum_square' }
 ]
 
@@ -52,31 +55,17 @@ export class AggregationFunction extends Component {
             <div>
               <p>
                 <Label htmlFor="inputkey" block={false}>
-                  {'Key(s)'}
+                  {'Key'}
                 </Label>
                 <Input
                   id="inputkey"
-                  placeholder="Choose key(s)..."
-                  value={json.args.keys}
+                  placeholder="Choose a key..."
+                  value={json.args.key}
                   onChange={event => {
                     var args = this.props.json.args
                     var title = ''
-                    args.keys = event.target.value
-                    if (
-                      args.weight == null ||
-                      args.weight == '' ||
-                      args.weight.length < 2
-                    ) {
-                      title = this.props.json.func.label + '(' + args.keys + ')'
-                    } else {
-                      title =
-                        this.props.json.func.label +
-                        '((' +
-                        args.keys +
-                        ')*' +
-                        args.weight +
-                        ')'
-                    }
+                    args.key = event.target.value
+                    title = this.props.json.func.label + '(' + args.key + ')'
                     this.onChange(this.props.json.func, args, title)
                   }}
                 />
@@ -93,21 +82,7 @@ export class AggregationFunction extends Component {
                     var args = this.props.json.args
                     var title = ''
                     args.weight = event.target.value
-                    if (
-                      args.weight == null ||
-                      args.weight == '' ||
-                      args.weight.length < 2
-                    ) {
-                      title = this.props.json.func.label + '(' + args.keys + ')'
-                    } else {
-                      title =
-                        this.props.json.func.label +
-                        '((' +
-                        args.keys +
-                        ')*' +
-                        args.weight +
-                        ')'
-                    }
+                    title = this.props.json.func.label + '(' + args.key + ')'
                     this.onChange(this.props.json.func, args, title)
                   }}
                 />
@@ -121,21 +96,104 @@ export class AggregationFunction extends Component {
             <div>
               <p>
                 <Label htmlFor="inputkey" block={false}>
-                  Weight
+                  Key
                 </Label>
                 <Input
                   id="inputkey"
                   placeholder="Choose a key..."
-                  value={json.args.weight}
+                  value={json.args.key}
                   onChange={event => {
                     var args = this.props.json.args
                     var title = ''
-                    args.keys = event.target.value
-                    title = this.props.json.func.label + '(' + args.keys + ')'
+                    args.key = event.target.value
+                    title = this.props.json.func.label + '(' + args.key + ')'
                     this.onChange(this.props.json.func, args, title)
                   }}
                 />
               </p>
+            </div>
+          )
+          break
+        case 'mean':
+          out.push(
+            <div>
+              <p>
+                <Label htmlFor="inputkey" block={false}>
+                  {'Sum'}
+                </Label>
+                <Input
+                  id="inputkey"
+                  placeholder="Choose a key..."
+                  value={json.args.sum}
+                  onChange={event => {
+                    var args = this.props.json.args
+                    var title = ''
+                    args.sum = event.target.value
+                    title = this.props.json.func.label + '(' + args.sum + ')'
+                    this.onChange(this.props.json.func, args, title)
+                  }}
+                />
+              </p>
+              <Infos
+                icon="info"
+                text="This layer has usually a previous layer used to compute the sum of one variable"
+              />
+            </div>
+          )
+          break
+        case 'standard_deviation':
+          out.push(
+            <div>
+              <p>
+                <Label htmlFor="inputkey" block={false}>
+                  {'Sum'}
+                </Label>
+                <Input
+                  id="inputkey"
+                  placeholder="Choose a key..."
+                  value={json.args.sum}
+                  onChange={event => {
+                    var args = this.props.json.args
+                    var title = ''
+                    args.sum = event.target.value
+                    title =
+                      this.props.json.func.label +
+                      '(' +
+                      args.sum +
+                      ',' +
+                      args.sum_square +
+                      ')'
+                    this.onChange(this.props.json.func, args, title)
+                  }}
+                />
+              </p>
+              <p>
+                <Label htmlFor="inputkey2" block={false}>
+                  Sum of squares
+                </Label>
+                <Input
+                  id="inputkey2"
+                  placeholder="Choose a key..."
+                  value={json.args.sum_square}
+                  onChange={event => {
+                    var args = this.props.json.args
+                    var title = ''
+                    args.sum_square = event.target.value
+                    title =
+                      this.props.json.func.label +
+                      '(' +
+                      args.sum +
+                      ',' +
+                      args.sum_square +
+                      ')'
+                    this.onChange(this.props.json.func, args, title)
+                  }}
+                />
+              </p>
+              <Infos
+                icon="info"
+                text="This layer has usually a previous layer used to compute the sum of a variable and the sum of squares of this same variable"
+              />
             </div>
           )
           break

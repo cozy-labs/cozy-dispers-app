@@ -24,14 +24,14 @@ const templateQuery = `{
 
 const templateLayer = `
 {
-  "layer_func": [//FUNCS//],
+  "layer_jobs": [//JOBS//],
   "layer_size": //SIZE//
 }
 `
 
 const templateFunc = `
 {
-  "func": "//FUNC//",
+  "job": "//JOB//",
   "args": {//ARGS//}
 }
 `

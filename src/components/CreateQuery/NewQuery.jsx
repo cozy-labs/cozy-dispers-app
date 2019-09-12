@@ -4,19 +4,20 @@ import AggregationFunction from './AggregationFunction'
 
 import { withClient } from 'cozy-client'
 import Accordion from 'cozy-ui/react/Accordion'
+import Badge from 'cozy-ui/react/Badge'
 import Button from 'cozy-ui/react/Button'
 import ButtonAction from 'cozy-ui/react/ButtonAction'
 import Card from 'cozy-ui/react/Card'
 import Checkbox from 'cozy-ui/react/Checkbox'
 import Chip from 'cozy-ui/react/Chip'
 import Empty from 'cozy-ui/react/Empty'
-import Field from 'cozy-ui/react/Field'
 import Label from 'cozy-ui/react/Label'
 import Icon from 'cozy-ui/react/Icon'
 import Infos from 'cozy-ui/react/Infos'
 import Input from 'cozy-ui/react/Input'
 import InputGroup from 'cozy-ui/react/InputGroup'
 import SelectBox from 'cozy-ui/react/SelectBox'
+import Toggle from 'cozy-ui/react/Toggle'
 import {
   templateQuery,
   templateLayer,
@@ -84,6 +85,7 @@ function buildInputQuery(
   isEncrypted,
   targetProfile,
   layers_da,
+  limitedObs,
   limit
 ) {
   // This function is going to inject string into a stringified json imported from template_input_query
@@ -149,32 +151,19 @@ function buildInputQuery(
 
     // Build jsonFunc for each function
     while (j < layers_da[i].layer_job.length) {
-      jsonLayerArgs =
-        '"keys":["' +
-        layers_da[i].layer_job[j].args.keys
-          .split(' ')
-          .join('')
-          .split(',')
-          .join('","') +
-        '"]'
-
-      // check if weight is specified. If yes, add it to jsonLayers
-      if (
-        layers_da[i].layer_job[j].args.weight != null &&
-        layers_da[i].layer_job[j].args.weight != '' &&
-        layers_da[i].layer_job[j].args.weight != ' '
-      ) {
-        jsonLayerArgs =
-          jsonLayerArgs +
-          ',"weight":"' +
-          layers_da[i].layer_job[j].args.weight +
-          '"'
+      jsonLayerArgs = ''
+      for (var key in layers_da[i].layer_job[j].args) {
+        if (layers_da[i].layer_job[j].args[key] != '') {
+          jsonLayerArgs =
+            jsonLayerArgs + `"${key}":"${layers_da[i].layer_job[j].args[key]}",`
+        }
       }
+      jsonLayerArgs = jsonLayerArgs.substring(0, jsonLayerArgs.length - 1)
 
       jsonFunc =
         jsonFunc +
         templateFunc
-          .replace('//FUNC//', layers_da[i].layer_job[j].func.value)
+          .replace('//JOB//', layers_da[i].layer_job[j].func.value)
           .replace('//ARGS//', jsonLayerArgs) +
         ','
 
@@ -186,7 +175,7 @@ function buildInputQuery(
     jsonLayers =
       jsonLayers +
       templateLayer
-        .replace('//FUNCS//', jsonFunc)
+        .replace('//JOBS//', jsonFunc)
         .replace('//SIZE//', layers_da[i].layer_size) +
       ','
 
@@ -203,7 +192,12 @@ function buildInputQuery(
     .replace('//DOCTYPE//', localquery.value)
     .replace('//OPERATION//', jsonTargetProfile)
     .replace('//ENCRYPTED//', isEncrypted)
-    .replace('//LIMIT//', limit)
+
+  if (!limitedObs) {
+    stringQuery = stringQuery.replace('"limit": //LIMIT//,', '')
+  }
+
+  stringQuery = stringQuery.replace('//LIMIT//', limit)
 
   // Remote body need to be map[string]string
   // It's an association between var name and value
@@ -229,14 +223,13 @@ export class NewQuery extends Component {
             {
               title: 'SUM(AMOUNT)',
               func: { label: 'Sum', value: 'sum' },
-              args: { keys: 'amount', weight: '' }
+              args: { key: 'amount' }
             },
             {
               title: 'SUM OF SQUARES(AMOUNT)',
               func: { label: 'Sum of squares', value: 'sum_square' },
               args: {
-                weight: '',
-                keys: 'amount'
+                key: 'amount'
               }
             }
           ],
@@ -245,11 +238,21 @@ export class NewQuery extends Component {
         {
           layer_job: [
             {
-              title: 'SUM(SUM_AMOUNT, SUM_SQUARE_AMOUNT, LENGTH)',
-              func: { label: 'Sum', value: 'sum' },
+              title: 'MEAN(SUM_AMOUNT, SUM_SQUARE_AMOUNT)',
+              func: { label: 'Mean', value: 'mean' },
               args: {
-                weight: '',
-                keys: 'sum_amount, sum_square_amount, length'
+                sum: 'sum_amount'
+              }
+            },
+            {
+              title: 'STANDARD DEVIATION(SUM_AMOUNT,SUM_SQUARE_AMOUNT)',
+              func: {
+                label: 'Standard Deviation',
+                value: 'standard_deviation'
+              },
+              args: {
+                sum: 'sum_amount',
+                sum_square: 'sum_square_amount'
               }
             }
           ],
@@ -277,7 +280,8 @@ export class NewQuery extends Component {
         'OR(OR(loc-travail>paris:loc-travail>lille)OR(loc-travail>saint-etienne:loc-travail>rennes))',
       isWorking: false,
       isFinished: false,
-      name: "Sum of operations' amount",
+      limitedObs: false,
+      name: "Mean and std of operations' amount",
       titleMsg: 'The query is running',
       msg: 'Go to "Saved Queries" to follow it'
     }
@@ -293,6 +297,7 @@ export class NewQuery extends Component {
           layer_size: 1
         }
       ],
+      limitedObs: false,
       tabTargetProfile: [],
       isEncrypted: true,
       labels: [],
@@ -311,12 +316,13 @@ export class NewQuery extends Component {
   }
 
   // create the new query
-  handleSubmit = async () => {
+  handleRun = async () => {
     const { client } = this.props
     const {
       localquery,
       isEncrypted,
       targetProfile,
+      limitedObs,
       labels,
       limit,
       layers_da,
@@ -334,6 +340,7 @@ export class NewQuery extends Component {
         isEncrypted,
         targetProfile,
         layers_da,
+        limitedObs,
         limit
       )
       success = true
@@ -418,12 +425,6 @@ export class NewQuery extends Component {
     try {
       const { layers_da, selectedLayer } = this.state
       out.push(<Label htmlFor="func0">{'Aggregation function(s)'}</Label>)
-      out.push(
-        <Infos
-          text="Ordered from the first executed to the last one"
-          icon="info"
-        />
-      )
       for (
         let idxJob = 0;
         idxJob < layers_da[selectedLayer - 1].layer_job.length;
@@ -460,6 +461,7 @@ export class NewQuery extends Component {
       selectedLayer,
       isEncrypted,
       targetProfile,
+      limitedObs,
       isWorking,
       isFinished,
       limit,
@@ -469,8 +471,6 @@ export class NewQuery extends Component {
       titleMsg,
       msg
     } = this.state
-
-    const isLastLayer = selectedLayer == layers_da.length
 
     return (
       <div>
@@ -484,10 +484,10 @@ export class NewQuery extends Component {
           </center>
         ) : (
           <div>
-            <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleRun}>
               <p>
                 <ButtonAction
-                  label="Demo"
+                  label="Example"
                   rightIcon="new"
                   onClick={this.demo}
                 />
@@ -622,145 +622,278 @@ export class NewQuery extends Component {
                       </p>
                     </Card>
 
+                    <br />
+                    <br />
+                    <br />
+
                     <Infos
                       title="How to build your target profile"
                       icon="info"
-                      text="Use the following tools to create your target profile. Example of TP
-                        : OR(maladie>sida:maladie>diabete)"
+                      text="Target Profile is a logical operation made with OR, AND, and concepts that defines which Cozy is going to participate to your query. A concept is a caracteristic about one user. The separator between two concepts is ':'."
+                    />
+
+                    <Infos
+                      title="Have a look to the following examples"
+                      icon="pin"
+                      style={{ height: '100%' }}
+                      text="'OR(maladie>sida:maladie>diabete)' 'OR(maladie>sida:AND(maladie>diabete,loc-travail>rennes))'"
                     />
                   </TabPanel>
                   <TabPanel name="t">
-                    <Field
-                      label="Choose one Doctype"
-                      type="select"
-                      value={localquery}
-                      onChange={event => {
-                        this.setState({ localquery: event })
-                      }}
-                      options={optionsDataset}
-                      placeholder="Select ..."
+                    <center>
+                      <Label htmlFor="idDatasets">Choose a doctype</Label>
+                      <SelectBox
+                        id="idDatasets"
+                        value={localquery}
+                        onChange={event => {
+                          this.setState({ localquery: event })
+                        }}
+                        options={optionsDataset}
+                        placeholder="Select ..."
+                      />
+                      <br />
+                      <div>
+                        <label
+                          htmlFor="0"
+                          style={{
+                            marginRight: '15px',
+                            color: this.state.limitedObs ? 'gray' : 'gray'
+                          }}
+                        >{`Target retrieve ${
+                          this.state.limitedObs
+                            ? 'a limited number of'
+                            : 'every'
+                        } data from one Cozy`}</label>
+                        <Toggle
+                          id="0"
+                          checked={limitedObs}
+                          onToggle={() =>
+                            this.setState({
+                              limitedObs: !limitedObs
+                            })
+                          }
+                        />
+                      </div>
+
+                      <Input
+                        id="limit"
+                        type="number"
+                        disabled={!this.state.limitedObs}
+                        onChange={event => {
+                          this.setState({ limit: event.target.value })
+                        }}
+                        value={limit}
+                        min="1"
+                        step="1"
+                      />
+                    </center>
+                    <br />
+                    <br />
+                    <br />
+
+                    <Infos
+                      title="On which doctype do you want to compute the query ?"
+                      icon="info"
+                      text="In the next step, you will have to specify the operation that will be made and on which key from the doctype you are choosing RIGHT NOW !!"
                     />
 
-                    <Label htmlFor="limit" style={{ marginRight: '3px' }}>
-                      Maximum of values retrieved from each Cozy
-                    </Label>
-                    <Input
-                      id="limit"
-                      type="number"
-                      onChange={event => {
-                        this.setState({ limit: event.target.value })
-                      }}
-                      value={limit}
-                      min="1"
-                      max="1000000"
-                      step="1"
+                    <Infos
+                      title="The less data, the fastest"
+                      icon="multi-files"
+                      text="You can choose if you want to retrieve every data from one Cozy, or just a sample. Sometime a sample is enough, no need to give too much work the Cozy-Stacks"
                     />
                   </TabPanel>
                   <TabPanel name="da">
-                    <p>
-                      <Chip theme="primary">
-                        <Icon icon="stack" style={{ marginRight: '0.5rem' }} />
-                        {layers_da.length} layer(s) in total
-                      </Chip>
-                      <ButtonAction
-                        label="Add layer"
-                        rightIcon="plus"
-                        onClick={() => {
-                          var { layers_da } = this.state
-                          layers_da.push({
-                            layer_job: [
-                              {
-                                args: []
-                              }
-                            ],
-                            layer_size: 1
-                          })
-                          this.setState({
-                            layers_da: layers_da
-                          })
-                        }}
-                      />
-                      <ButtonAction
-                        type="error"
-                        label="Remove last layer"
-                        onClick={() => {
-                          var { layers_da, selectedLayer } = this.state
-                          if (selectedLayer == layers_da.length) {
-                            selectedLayer = selectedLayer - 1
+                    <div
+                      style={{
+                        marginLeft: '10%',
+                        marginRight: '10%'
+                      }}
+                    >
+                      {(() => {
+                        try {
+                          const { layers_da } = this.state
+                          const br = <br />
+                          var out = []
+                          for (
+                            let idxLayer = 0;
+                            idxLayer < layers_da.length;
+                            idxLayer++
+                          ) {
+                            out.push(
+                              <Chip
+                                variant="outlined"
+                                name={idxLayer + 1}
+                                style={
+                                  (idxLayer == layers_da.length - 1 && {
+                                    marginRight: '7.5rem',
+                                    color: '#297ef2'
+                                  }) || {
+                                    marginRight: '1.2rem',
+                                    color: '#297ef2'
+                                  }
+                                }
+                                onClick={() => {
+                                  try {
+                                    this.setState({
+                                      selectedLayer: idxLayer + 1
+                                    })
+                                  } catch (e) {
+                                    alert(e)
+                                  }
+                                }}
+                              >
+                                <Icon
+                                  icon="stack"
+                                  style={{ marginRight: '1.2rem' }}
+                                />
+                                {(idxLayer == layers_da.length - 1 && 'MDA') ||
+                                  `Layer ${idxLayer + 1}`}
+                              </Chip>
+                            )
+                            if (idxLayer != layers_da.length - 1) {
+                              out.push(
+                                <Chip.Button
+                                  theme="normal"
+                                  variant="outlined"
+                                  onClick={() => {
+                                    try {
+                                      var { layers_da } = this.state
+
+                                      if (layers_da[idxLayer].layer_size != 1) {
+                                        layers_da[idxLayer].layer_size =
+                                          layers_da[idxLayer].layer_size - 1
+                                      }
+
+                                      this.setState({
+                                        layers_da: layers_da
+                                      })
+                                    } catch (e) {
+                                      alert(e)
+                                    }
+                                  }}
+                                >
+                                  <Icon icon="cross" />
+                                </Chip.Button>
+                              )
+                              out.push(
+                                <Chip.Button
+                                  theme="normal"
+                                  variant="outlined"
+                                  onClick={() => {
+                                    try {
+                                      var { layers_da } = this.state
+
+                                      layers_da[idxLayer].layer_size =
+                                        layers_da[idxLayer].layer_size + 1
+
+                                      this.setState({
+                                        layers_da: layers_da
+                                      })
+                                    } catch (e) {
+                                      alert(e)
+                                    }
+                                  }}
+                                >
+                                  <Icon icon="plus" />
+                                </Chip.Button>
+                              )
+                            }
+                            for (
+                              let idxDA = 0;
+                              idxDA <
+                              Math.min(layers_da[idxLayer].layer_size, 6);
+                              idxDA++
+                            ) {
+                              out.push(
+                                <Chip>
+                                  <Icon icon="cozy" />
+                                </Chip>
+                              )
+                            }
+                            if (layers_da[idxLayer].layer_size > 6) {
+                              out.push(
+                                <Badge
+                                  content={layers_da[idxLayer].layer_size - 6}
+                                  type="new"
+                                >
+                                  <ButtonAction
+                                    type="new"
+                                    disabled
+                                    leftIcon="plus"
+                                    label="New"
+                                    compact
+                                  />
+                                </Badge>
+                              )
+                            }
+
+                            out.push(br)
                           }
-                          layers_da.splice(-1, 1)
-                          this.setState({
-                            layers_da: layers_da,
-                            selectedLayer: selectedLayer
-                          })
-                        }}
-                        rightIcon="file-none"
-                      />
-                    </p>
+                          return out
+                        } catch (e) {
+                          alert(e)
+                        }
+                      })()}
+                      <p>
+                        <ButtonAction
+                          label="Add layer"
+                          rightIcon="plus"
+                          onClick={() => {
+                            var { layers_da } = this.state
+                            layers_da.push({
+                              layer_job: [
+                                {
+                                  title: '',
+                                  func: { label: '', value: '' },
+                                  args: {}
+                                }
+                              ],
+                              layer_size: 1
+                            })
+                            this.setState({
+                              layers_da: layers_da
+                            })
+                          }}
+                        />
+                        <ButtonAction
+                          type="error"
+                          label="Remove last layer"
+                          onClick={() => {
+                            var { layers_da, selectedLayer } = this.state
+                            if (selectedLayer == layers_da.length) {
+                              selectedLayer = selectedLayer - 1
+                            }
+                            layers_da.splice(-1, 1)
+                            layers_da[layers_da.length - 1].layer_size = 1
+                            this.setState({
+                              layers_da: layers_da,
+                              selectedLayer: selectedLayer
+                            })
+                          }}
+                          rightIcon="file-none"
+                        />
+                      </p>
+                    </div>
+                    <br />
                     <Card
                       style={{
                         marginLeft: '20%',
                         marginRight: '20%'
                       }}
                     >
-                      <center>
-                        <p>
-                          <div>
-                            <Chip.Button
-                              variant="outlined"
-                              onClick={() => {
-                                var { selectedLayer } = this.state
-                                if (selectedLayer > 1) {
-                                  selectedLayer = selectedLayer - 1
-                                }
-                                this.setState({ selectedLayer: selectedLayer })
-                              }}
-                            >
-                              <Icon icon="left" />
-                            </Chip.Button>
-                            <Chip>
-                              <Icon
-                                icon="stack"
-                                style={{ marginRight: '0.5rem' }}
-                              />
-                              Layer {selectedLayer}
-                            </Chip>
-                            <Chip.Button
-                              variant="outlined"
-                              onClick={() => {
-                                var { selectedLayer, layers_da } = this.state
-                                if (selectedLayer < layers_da.length) {
-                                  selectedLayer = selectedLayer + 1
-                                }
-                                this.setState({ selectedLayer: selectedLayer })
-                              }}
-                            >
-                              <Icon icon="right" />
-                            </Chip.Button>
-                          </div>
-                        </p>
-                      </center>
-                      <Label htmlFor="layer">Parallel computation</Label>
-                      <Input
-                        type="number"
-                        id="layer"
-                        value={layers_da[selectedLayer - 1].layer_size}
-                        onChange={event => {
-                          const { layers_da } = this.state
-                          layers_da[selectedLayer - 1].layer_size =
-                            event.target.value
-                          this.setState({ layers_da: layers_da })
-                        }}
-                        min="1"
-                        max={isLastLayer ? 1 : 100}
-                        step="1"
-                      />
-                      <br />
+                      <h2>
+                        {'Aggregation function(s) of '}
+                        <em style={{ color: '#297ef2' }}>
+                          {(selectedLayer == layers_da.length && 'MDA') ||
+                            `Layer ${selectedLayer}`}
+                        </em>
+                      </h2>
                       <br />
 
                       <Accordion>{this.displayArgs()}</Accordion>
-
                       <br />
+
                       <ButtonAction
                         label="Add function"
                         rightIcon="plus"
@@ -789,6 +922,30 @@ export class NewQuery extends Component {
                         }}
                       />
                     </Card>
+
+                    <br />
+                    <br />
+                    <br />
+                    <Infos
+                      title="What's the Main Data Aggregator ?"
+                      icon="people"
+                      text="Before the last layer, each Data Aggregator send its result, those results should be aggregated if the querier wants to use them."
+                    />
+                    <Infos
+                      title="Several Data Aggregators for a safer query"
+                      icon="team"
+                      text="By setting several DAs, you build a stronger query. The less Data a DA receives, the less possible a statistic attack will be. Furthermore, the query should be faster."
+                    />
+                    <Infos
+                      title="What's in Input ? What's in Output ?"
+                      icon="merge"
+                      text="The first layer of DA receives data from Targets, layer n+1 receives results from n. Data are merged after layer n, shuffled and distributed to layer n+1"
+                    />
+                    <Infos
+                      title="Every Data Aggregator is independant"
+                      icon="unlink"
+                      text="Every DA on one layer computes the same treatment but on a different datasets, and possibly in a different execution environnement"
+                    />
                   </TabPanel>
                   <TabPanel name="general">
                     <div>
@@ -820,6 +977,7 @@ export class NewQuery extends Component {
                       <br />
                       <Checkbox
                         label="Encrypted query"
+                        disabled
                         value={isEncrypted}
                         onChange={() => {
                           var { isEncrypted } = this.state
@@ -830,12 +988,47 @@ export class NewQuery extends Component {
                     </div>
                     <br />
                     <Button
+                      label="Download Input as JSON"
+                      type="button"
+                      theme="secondary"
+                      icon="download"
+                      size="large"
+                      onClick={() => {
+                        window.open(
+                          (
+                            'data:application/json;charset=utf-8,' +
+                            encodeURIComponent(
+                              buildInputQuery(
+                                this.state.localquery,
+                                this.state.isEncrypted,
+                                this.state.targetProfile,
+                                this.state.layers_da,
+                                this.state.limitedObs,
+                                this.state.limit
+                              )['data']
+                            )
+                          )
+                            .split('%20')
+                            .join('')
+                        )
+                      }}
+                    />
+                    <Button
                       onClick={this.submit}
                       type="submit"
+                      theme="highlight"
                       busy={isWorking}
                       label="Run"
                       size="large"
                       extension="narrow"
+                    />
+                    <br />
+                    <br />
+                    <br />
+                    <Infos
+                      title="DON'T WORRY"
+                      icon="unlink"
+                      text="This panel is not that important. Fill those field to find quickly the training in 'Saved Queries'"
                     />
                   </TabPanel>
                 </TabPanels>

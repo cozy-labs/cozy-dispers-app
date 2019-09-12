@@ -191,7 +191,7 @@ export class ViewModal extends Component {
                   </TabList>
                   <TabPanels>
                     <TabPanel name="targets">
-                      <small>{training.targetProfile}</small>
+                      <font size="5">{training.targetProfile}</font>
                     </TabPanel>
                     <TabPanel name="aggr">
                       {(training => {
@@ -263,17 +263,19 @@ export class ViewModal extends Component {
                               const br = <br />
 
                               for (var res in training.state.Results) {
-                                out.push(
-                                  <FigureBlock
-                                    label={res}
-                                    total={training.state.Results[res]}
-                                    symbol=""
-                                    coloredPositive
-                                    coloredNegative
-                                    signed
-                                  />
-                                )
-                                out.push(br)
+                                if (res != 'length') {
+                                  out.push(
+                                    <FigureBlock
+                                      label={res}
+                                      total={training.state.Results[res]}
+                                      symbol=""
+                                      coloredPositive
+                                      coloredNegative
+                                      signed
+                                    />
+                                  )
+                                  out.push(br)
+                                }
                               }
                               return out
                             } catch (e) {
@@ -290,6 +292,9 @@ export class ViewModal extends Component {
                               encodeURIComponent(JSON.stringify(training))
                             }
                           />
+                          <br />
+                          <br />
+                          <br />
                         </div>
                       </form>
                     </TabPanel>
