@@ -40,29 +40,29 @@ const optionsDataset = [
 ]
 
 const optionsConcept = [
-  { value: 'diplome>cap', label: "Diplômé.e d'un CAP" },
-  { value: 'diplome>bac', label: 'Diplômé.e du BAC' },
-  { value: 'diplome>dut', label: "Diplômé.e d'un DUT" },
-  { value: 'diplome>licence', label: "Diplômé.e d'une licence" },
-  { value: 'diplome>master', label: "Diplômé.e d'un master" },
-  { value: 'diplome>ingenieur', label: 'Diplômé.e en inégnierie' },
-  { value: 'diplome>commerce', label: 'Diplômé.e en commerce' },
-  { value: 'diplome>doctorat', label: "Diplômé.e d'un doctorat" },
-  { value: 'imc>maigreur', label: 'IMC : Maigre' },
-  { value: 'imc>normal', label: 'IMC : Normal' },
-  { value: 'imc>surpoids', label: 'IMC : Surpoids' },
-  { value: 'imc>obesite-moderee', label: 'IMC : Obésité modérée' },
-  { value: 'imc>obesite-severe', label: 'IMC : Obésité sévère' },
-  { value: 'imc>obesite-morbide', label: 'IMC : Obésité morbide' },
-  { value: 'maladie>alzheimer', label: "Atteint d'Alzheimer" },
-  { value: 'maladie>cancer', label: "Atteint d'un cancer" },
-  { value: 'maladie>diabete', label: 'Atteint de diabète' },
-  { value: 'maladie>parkinson', label: "Atteint d'un Parkinson" },
-  { value: 'maladie>sida', label: 'Atteint du SIDA' },
-  { value: 'loc-travail>paris', label: 'Travail à Paris' },
-  { value: 'loc-travail>lille', label: 'Travail à Lille' },
-  { value: 'loc-travail>rennes', label: 'Travail à Rennes' },
-  { value: 'loc-travail>saint-etienne', label: 'Travail à Saint-Etienne' }
+  { value: 'diplome=cap', label: "Diplômé.e d'un CAP" },
+  { value: 'diplome=bac', label: 'Diplômé.e du BAC' },
+  { value: 'diplome=dut', label: "Diplômé.e d'un DUT" },
+  { value: 'diplome=licence', label: "Diplômé.e d'une licence" },
+  { value: 'diplome=master', label: "Diplômé.e d'un master" },
+  { value: 'diplome=ingenieur', label: 'Diplômé.e en inégnierie' },
+  { value: 'diplome=commerce', label: 'Diplômé.e en commerce' },
+  { value: 'diplome=doctorat', label: "Diplômé.e d'un doctorat" },
+  { value: 'imc=maigreur', label: 'IMC : Maigre' },
+  { value: 'imc=normal', label: 'IMC : Normal' },
+  { value: 'imc=surpoids', label: 'IMC : Surpoids' },
+  { value: 'imc=obesite-moderee', label: 'IMC : Obésité modérée' },
+  { value: 'imc=obesite-severe', label: 'IMC : Obésité sévère' },
+  { value: 'imc=obesite-morbide', label: 'IMC : Obésité morbide' },
+  { value: 'maladie=alzheimer', label: "Atteint d'Alzheimer" },
+  { value: 'maladie=cancer', label: "Atteint d'un cancer" },
+  { value: 'maladie=diabete', label: 'Atteint de diabète' },
+  { value: 'maladie=parkinson', label: "Atteint d'un Parkinson" },
+  { value: 'maladie=sida', label: 'Atteint du SIDA' },
+  { value: 'travail=paris', label: 'Travail à Paris' },
+  { value: 'travail=lille', label: 'Travail à Lille' },
+  { value: 'travail=rennes', label: 'Travail à Rennes' },
+  { value: 'travail=saint-etienne', label: 'Travail à Saint-Etienne' }
 ]
 
 const optionsLabels = [
@@ -99,9 +99,9 @@ function buildInputQuery(
   // Extract an array of Concpets from the targetProfile
   var concepts = targetProfile
     .split(')OR')
-    .join(':')
+    .join(',')
     .split(')AND')
-    .join(':')
+    .join(',')
     .split('OR')
     .join('')
     .split('AND')
@@ -110,15 +110,15 @@ function buildInputQuery(
     .join('')
     .split(')')
     .join('')
-    .split(':')
+    .split(',')
 
   var i = 0
   var pseudoConcept = new Map()
   var conceptID
   var conceptPseudoAnonymized
   while (i < concepts.length) {
-    // e.g. concepts[i]=conceptID="work>Paris"
-    conceptID = concepts[i]
+    // e.g. concepts[i]=conceptID="work=Paris"
+    conceptID = concepts[i].substring(1, concepts[i].length - 1)
     conceptPseudoAnonymized = new md5().update('concepts' + i).digest('hex')
 
     // Add concept to jsonConcept
@@ -129,8 +129,10 @@ function buildInputQuery(
 
     // Replace concept with pseudo-anonymised concept
     jsonTargetProfile = jsonTargetProfile
-      .split(concepts[i])
+      .split(conceptID)
       .join(conceptPseudoAnonymized)
+      .split('\\"')
+      .join('')
     i = i + 1
   }
 
@@ -265,19 +267,19 @@ export class NewQuery extends Component {
       tabTargetProfile: [
         'OR(',
         'OR(',
-        'loc-travail>paris',
-        ':',
-        'loc-travail>lille',
+        '"travail=paris"',
+        ',',
+        '"travail=lille"',
         ')',
         'OR(',
-        'loc-travail>saint-etienne',
-        ':',
-        'loc-travail>rennes',
+        '"travail=saint-etienne"',
+        ',',
+        '"travail=rennes"',
         ')',
         ')'
       ],
       targetProfile:
-        'OR(OR(loc-travail>paris:loc-travail>lille)OR(loc-travail>saint-etienne:loc-travail>rennes))',
+        'OR(OR("travail=paris","travail=lille")OR("travail=saint-etienne","travail=rennes"))',
       isWorking: false,
       isFinished: false,
       limitedObs: false,
@@ -307,7 +309,6 @@ export class NewQuery extends Component {
       isFinished: false,
       name: ''
     }
-
     this.initialState = this.state
   }
 
@@ -487,7 +488,7 @@ export class NewQuery extends Component {
             <form onSubmit={this.handleRun}>
               <p>
                 <ButtonAction
-                  label="Example"
+                  label="Make query example"
                   rightIcon="new"
                   onClick={this.demo}
                 />
@@ -508,118 +509,157 @@ export class NewQuery extends Component {
                 </TabList>
                 <TabPanels>
                   <TabPanel name="targets">
-                    <center>
-                      <div>
-                        <Button
-                          label="And("
-                          type="button"
-                          theme="secondary"
-                          onClick={() => {
-                            var { tabTargetProfile } = this.state
-                            tabTargetProfile.push('AND(')
-                            this.setState({
-                              tabTargetProfile: tabTargetProfile,
-                              targetProfile: tabTargetProfile.join('')
-                            })
-                          }}
-                        />
-                        <Button
-                          label="Or("
-                          type="button"
-                          theme="secondary"
-                          onClick={() => {
-                            var { tabTargetProfile } = this.state
-                            tabTargetProfile.push('OR(')
-                            this.setState({
-                              tabTargetProfile: tabTargetProfile,
-                              targetProfile: tabTargetProfile.join('')
-                            })
-                          }}
-                        />
-                        <Button
-                          label=":"
-                          type="button"
-                          theme="secondary"
-                          onClick={() => {
-                            var { tabTargetProfile } = this.state
-                            tabTargetProfile.push(':')
-                            this.setState({
-                              tabTargetProfile: tabTargetProfile,
-                              targetProfile: tabTargetProfile.join('')
-                            })
-                          }}
-                        />
-                        <Button
-                          label=")"
-                          type="button"
-                          theme="secondary"
-                          onClick={() => {
-                            var { tabTargetProfile } = this.state
-                            tabTargetProfile.push(')')
-                            this.setState({
-                              tabTargetProfile: tabTargetProfile,
-                              targetProfile: tabTargetProfile.join('')
-                            })
-                          }}
-                        />
-                        <Button
-                          label="DEL"
-                          type="button"
-                          icon="previous"
-                          theme="danger-outline"
-                          onClick={() => {
-                            var { tabTargetProfile } = this.state
-                            tabTargetProfile.splice(-1, 1)
-                            this.setState({
-                              tabTargetProfile: tabTargetProfile,
-                              targetProfile: tabTargetProfile.join('')
-                            })
-                          }}
-                        />
-                      </div>
-                      <br />
-                      <div>
-                        <InputGroup
-                          append={
-                            <Button
-                              label="Add"
-                              type="button"
-                              onClick={() => {
-                                const { conceptSelector } = this.state
-                                var { tabTargetProfile } = this.state
-                                tabTargetProfile.push(conceptSelector.value)
-                                this.setState({
-                                  tabTargetProfile: tabTargetProfile,
-                                  targetProfile: tabTargetProfile.join('')
-                                })
-                              }}
-                            />
-                          }
-                        >
-                          <SelectBox
-                            value={conceptSelector}
-                            onChange={event => {
-                              this.setState({ conceptSelector: event })
+                    <Card style={{ backgroundColor: '#E6E6E6' }}>
+                      <center>
+                        <div>
+                          <Button
+                            label="And("
+                            type="button"
+                            theme="secondary"
+                            onClick={() => {
+                              var { tabTargetProfile } = this.state
+                              tabTargetProfile.push('AND(')
+                              this.setState({
+                                tabTargetProfile: tabTargetProfile,
+                                targetProfile: tabTargetProfile.join('')
+                              })
                             }}
-                            options={optionsConcept}
-                            id="idConcepts"
                           />
-                        </InputGroup>
-                      </div>
-                    </center>
-                    <br />
-                    <br />
+                          <Button
+                            label="Or("
+                            type="button"
+                            theme="secondary"
+                            onClick={() => {
+                              var { tabTargetProfile } = this.state
+                              tabTargetProfile.push('OR(')
+                              this.setState({
+                                tabTargetProfile: tabTargetProfile,
+                                targetProfile: tabTargetProfile.join('')
+                              })
+                            }}
+                          />
+                          <Button
+                            label=","
+                            type="button"
+                            theme="secondary"
+                            onClick={() => {
+                              var { tabTargetProfile } = this.state
+                              tabTargetProfile.push(',')
+                              this.setState({
+                                tabTargetProfile: tabTargetProfile,
+                                targetProfile: tabTargetProfile.join('')
+                              })
+                            }}
+                          />
+                          <Button
+                            label=")"
+                            type="button"
+                            theme="secondary"
+                            onClick={() => {
+                              var { tabTargetProfile } = this.state
+                              tabTargetProfile.push(')')
+                              this.setState({
+                                tabTargetProfile: tabTargetProfile,
+                                targetProfile: tabTargetProfile.join('')
+                              })
+                            }}
+                          />
+                          <Button
+                            label="DEL"
+                            type="button"
+                            icon="previous"
+                            theme="danger-outline"
+                            onClick={() => {
+                              var { tabTargetProfile } = this.state
+                              tabTargetProfile.splice(-1, 1)
+                              this.setState({
+                                tabTargetProfile: tabTargetProfile,
+                                targetProfile: tabTargetProfile.join('')
+                              })
+                            }}
+                          />
+                        </div>
+                        <br />
+                        <div>
+                          <InputGroup
+                            append={
+                              <Button
+                                label="Add"
+                                type="button"
+                                onClick={() => {
+                                  const { conceptSelector } = this.state
+                                  var { tabTargetProfile } = this.state
+                                  tabTargetProfile.push(
+                                    '"' + conceptSelector.value + '"'
+                                  )
+                                  this.setState({
+                                    tabTargetProfile: tabTargetProfile,
+                                    targetProfile: tabTargetProfile.join('')
+                                  })
+                                }}
+                              />
+                            }
+                          >
+                            <SelectBox
+                              value={conceptSelector}
+                              onChange={event => {
+                                this.setState({ conceptSelector: event })
+                              }}
+                              options={optionsConcept}
+                              id="idConcepts"
+                            />
+                          </InputGroup>
+                        </div>
+                      </center>
+                      <br />
+                      <br />
 
-                    <Card>
-                      <p
-                        style={{
-                          fontSize:
-                            30 + 150 / (targetProfile.length + 1) + 'pt',
-                          color: '#484848'
-                        }}
-                      >
-                        {targetProfile}
-                      </p>
+                      <div style={{ backgroundColor: 'white' }}>
+                        <Card>
+                          <p>
+                            {(() => {
+                              const { tabTargetProfile } = this.state
+                              var out = []
+                              if (tabTargetProfile.length != 0) {
+                                for (
+                                  let idx = 0;
+                                  idx < tabTargetProfile.length;
+                                  idx++
+                                ) {
+                                  out.push(
+                                    <a
+                                      style={{
+                                        backgroundColor: '#E0E6F8',
+                                        margin: '3px',
+                                        fontSize:
+                                          30 +
+                                          150 / (targetProfile.length + 1) +
+                                          'pt',
+                                        padding: '5px',
+                                        borderRadius: '4px'
+                                      }}
+                                    >
+                                      {tabTargetProfile[idx]}
+                                    </a>
+                                  )
+                                }
+                              } else {
+                                out.push(
+                                  <a
+                                    style={{
+                                      fontSize: '20pt',
+                                      color: '#AAAAAA'
+                                    }}
+                                  >
+                                    Create a target profile using the buttons...
+                                  </a>
+                                )
+                              }
+                              return out
+                            })()}
+                          </p>
+                        </Card>
+                      </div>
                     </Card>
 
                     <br />
@@ -629,15 +669,23 @@ export class NewQuery extends Component {
                     <Infos
                       title="How to build your target profile"
                       icon="info"
-                      text="Target Profile is a logical operation made with OR, AND, and concepts that defines which Cozy is going to participate to your query. A concept is a caracteristic about one user. The separator between two concepts is ':'."
+                      text="Target Profile is a logical operation made with OR, AND, and concepts that defines which Cozy is going to participate to your query. A concept is a caracteristic about one user. The separator between two concepts is ','."
                     />
 
-                    <Infos
-                      title="Have a look to the following examples"
-                      icon="pin"
-                      style={{ height: '100%' }}
-                      text="'OR(maladie>sida:maladie>diabete)' 'OR(maladie>sida:AND(maladie>diabete,loc-travail>rennes))'"
-                    />
+                    <ul>
+                      <li>"imc=surpoids"</li>
+                      <li>OR("maladie=cancer","imc=obesite-moderee")</li>
+                      <li>AND("maladie=cancer","imc=obesite-moderee")</li>
+                      <li>
+                        OR(AND("maladie=cancer","imc=obesite-moderee"),"maladie=diabete")
+                      </li>
+                      <li>
+                        OR(AND("maladie=cancer","imc=obesite-moderee"),AND("imc=normal","maladie=alzheimer"))
+                      </li>
+                      <li>
+                        OR(AND("maladie=cancer","imc=obesite-moderee")AND("imc=normal","maladie=alzheimer"))
+                      </li>
+                    </ul>
                   </TabPanel>
                   <TabPanel name="t">
                     <center>
@@ -653,39 +701,26 @@ export class NewQuery extends Component {
                       />
                       <br />
                       <div>
-                        <label
-                          htmlFor="0"
-                          style={{
-                            marginRight: '15px',
-                            color: this.state.limitedObs ? 'gray' : 'gray'
-                          }}
-                        >{`Target retrieve ${
-                          this.state.limitedObs
-                            ? 'a limited number of'
-                            : 'every'
-                        } data from one Cozy`}</label>
-                        <Toggle
-                          id="0"
-                          checked={limitedObs}
-                          onToggle={() =>
+                        <Label htmlFor="limit">
+                          Maximal size of data retrieved for each target
+                          (OPTIONAL)
+                        </Label>
+                        <Input
+                          id="limit"
+                          type="number"
+                          onChange={event => {
+                            var limitedObs = event.target.value > 0
+
                             this.setState({
-                              limitedObs: !limitedObs
+                              limit: event.target.value,
+                              limitedObs: limitedObs
                             })
-                          }
+                          }}
+                          value={limit}
+                          min="1"
+                          step="1"
                         />
                       </div>
-
-                      <Input
-                        id="limit"
-                        type="number"
-                        disabled={!this.state.limitedObs}
-                        onChange={event => {
-                          this.setState({ limit: event.target.value })
-                        }}
-                        value={limit}
-                        min="1"
-                        step="1"
-                      />
                     </center>
                     <br />
                     <br />
@@ -694,13 +729,13 @@ export class NewQuery extends Component {
                     <Infos
                       title="On which doctype do you want to compute the query ?"
                       icon="info"
-                      text="In the next step, you will have to specify the operation that will be made and on which key from the doctype you are choosing RIGHT NOW !!"
+                      text="In the next step, you will have to specify the operation that will be made and on which key from the doctype you are choosing right now"
                     />
 
                     <Infos
                       title="The less data, the fastest"
                       icon="multi-files"
-                      text="You can choose if you want to retrieve every data from one Cozy, or just a sample. Sometime a sample is enough, no need to give too much work the Cozy-Stacks"
+                      text="You can choose if you want to retrieve every data from one Cozy, or just a sample. Most of the time, a sample is enough. Keep the field empty if you want to compute over all the data."
                     />
                   </TabPanel>
                   <TabPanel name="da">
@@ -929,7 +964,7 @@ export class NewQuery extends Component {
                     <Infos
                       title="What's the Main Data Aggregator ?"
                       icon="people"
-                      text="Before the last layer, each Data Aggregator send its result, those results should be aggregated if the querier wants to use them."
+                      text="Setting several DA's imply that results from each DA have to be merged."
                     />
                     <Infos
                       title="Several Data Aggregators for a safer query"
@@ -1026,9 +1061,9 @@ export class NewQuery extends Component {
                     <br />
                     <br />
                     <Infos
-                      title="DON'T WORRY"
-                      icon="unlink"
-                      text="This panel is not that important. Fill those field to find quickly the training in 'Saved Queries'"
+                      title="Make your query easier to retrieve"
+                      icon="file-type-files"
+                      text="For now, this panel is only useful to easily retrieve queries afterwards."
                     />
                   </TabPanel>
                 </TabPanels>
