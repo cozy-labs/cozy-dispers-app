@@ -25,29 +25,17 @@ export const Home = () => {
           <Section>
             <Icon color={RED} icon="personal-data" />
             <Subtitle>Aggregate very personal data</Subtitle>
-            <Paragraph>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam.
-            </Paragraph>
+            <Paragraph></Paragraph>
           </Section>
           <Section>
             <Icon color={PURPLE} icon="cloud-happy" />
             <Subtitle>Share your data for statistics</Subtitle>
-            <Paragraph>
-              Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-              accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
-              quae ab illo inventore.
-            </Paragraph>
+            <Paragraph></Paragraph>
           </Section>
           <Section>
             <Icon color={BLUE} icon="certified" />
             <Subtitle>Still private by design</Subtitle>
-            <Paragraph>
-              Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,
-              consectetur, adipisci velit, sed quia non numquam eius modi
-              tempora incidunt ut labore.
-            </Paragraph>
+            <Paragraph></Paragraph>
           </Section>
         </Sections>
       </Hero>
@@ -68,6 +56,20 @@ export const Home = () => {
           <img src="schema_dispers_extended_mm.png" width="100%"></img>
         </Card>
 
+        <br />
+
+        <Card>
+          <SubTitle className="u-mb-1">Blog post</SubTitle>
+          <Text className="u-mb-1">
+            voluptatum deleniti atque corrupti quos dolores et quas molestias
+            excepturi sint occaecati cupiditate non provident. Similique sunt in
+            culpa qui officia.
+          </Text>
+          <ButtonLink
+            label="Read"
+            href="https://blog.cozy.io/fr/entrainer-une-ia-sans-posseder-la-donnee-est-possible/"
+          />
+        </Card>
         <br />
         <Card>
           <SubTitle className="u-mb-1">Docs Cozy-DISPERS</SubTitle>

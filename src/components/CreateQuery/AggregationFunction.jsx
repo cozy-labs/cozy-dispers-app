@@ -1,8 +1,9 @@
-import React, { Component } from 'react'
 import { AccordionItem } from 'cozy-ui/react/Accordion'
+import Button from 'cozy-ui/react/Button'
 import Field from 'cozy-ui/react/Field'
 import Label from 'cozy-ui/react/Label'
 import Infos from 'cozy-ui/react/Infos'
+import React, { Component } from 'react'
 
 const Input = require('cozy-ui/react/Input').default
 
@@ -36,7 +37,6 @@ export class AggregationFunction extends Component {
       out.push(
         <div>
           <Field
-            label="Aggregation function"
             type="select"
             options={optionsTypeLayer}
             value={json.func}
@@ -213,6 +213,26 @@ export class AggregationFunction extends Component {
       alert(e)
     }
 
+    out.push(
+      <p>
+        <Button
+          extension="full"
+          align="center"
+          icon="trash"
+          type="button"
+          theme="danger"
+          label="Delete"
+          onClick={() => {
+            if (this.props.onDelete) {
+              this.props.onDelete()
+            }
+          }}
+        />
+      </p>
+    )
+
+    out.push(br)
+    out.push(br)
     out.push(br)
     out.push(br)
     out.push(br)

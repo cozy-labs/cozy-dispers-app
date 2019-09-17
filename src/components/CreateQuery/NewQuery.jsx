@@ -3,8 +3,7 @@ import React, { Component } from 'react'
 import AggregationFunction from './AggregationFunction'
 
 import { withClient } from 'cozy-client'
-import Accordion from 'cozy-ui/react/Accordion'
-import Badge from 'cozy-ui/react/Badge'
+import Accordion, { AccordionItem } from 'cozy-ui/react/Accordion'
 import Button from 'cozy-ui/react/Button'
 import ButtonAction from 'cozy-ui/react/ButtonAction'
 import Card from 'cozy-ui/react/Card'
@@ -16,24 +15,18 @@ import Icon from 'cozy-ui/react/Icon'
 import Infos from 'cozy-ui/react/Infos'
 import Input from 'cozy-ui/react/Input'
 import InputGroup from 'cozy-ui/react/InputGroup'
+import { Modal, ModalContent } from 'cozy-ui/react'
 import SelectBox from 'cozy-ui/react/SelectBox'
-import Toggle from 'cozy-ui/react/Toggle'
 import {
   templateQuery,
   templateLayer,
   templateFunc
 } from 'assets/template_input_query.js'
 import { QUERIES_DOCTYPE } from 'doctypes'
+import { optionsModels, blank, mean, min } from './Models.jsx'
 
 const CheckboxOption = require('cozy-ui/react/SelectBox').CheckboxOption
 const md5 = require('md5.js')
-const {
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel
-} = require('cozy-ui/react/Tabs')
 
 const optionsDataset = [
   { label: 'io.cozy.bank.operations', value: 'io.cozy.bank.operations' }
@@ -214,106 +207,13 @@ export class NewQuery extends Component {
 
     // initial component state
     this.state = {
-      selectedLayer: 1,
-      localquery: {
-        label: 'io.cozy.bank.operations',
-        value: 'io.cozy.bank.operations'
-      },
-      layers_da: [
-        {
-          layer_job: [
-            {
-              title: 'SUM(AMOUNT)',
-              func: { label: 'Sum', value: 'sum' },
-              args: { key: 'amount' }
-            },
-            {
-              title: 'SUM OF SQUARES(AMOUNT)',
-              func: { label: 'Sum of squares', value: 'sum_square' },
-              args: {
-                key: 'amount'
-              }
-            }
-          ],
-          layer_size: 6
-        },
-        {
-          layer_job: [
-            {
-              title: 'MEAN(SUM_AMOUNT, SUM_SQUARE_AMOUNT)',
-              func: { label: 'Mean', value: 'mean' },
-              args: {
-                sum: 'sum_amount'
-              }
-            },
-            {
-              title: 'STANDARD DEVIATION(SUM_AMOUNT,SUM_SQUARE_AMOUNT)',
-              func: {
-                label: 'Standard Deviation',
-                value: 'standard_deviation'
-              },
-              args: {
-                sum: 'sum_amount',
-                sum_square: 'sum_square_amount'
-              }
-            }
-          ],
-          layer_size: 1
-        }
-      ],
-      isEncrypted: false,
-      labels: [{ label: 'Finance', value: 'finance' }],
-      limit: 1000,
-      tabTargetProfile: [
-        'OR(',
-        'OR(',
-        '"travail=paris"',
-        ',',
-        '"travail=lille"',
-        ')',
-        'OR(',
-        '"travail=saint-etienne"',
-        ',',
-        '"travail=rennes"',
-        ')',
-        ')'
-      ],
-      targetProfile:
-        'OR(OR("travail=paris","travail=lille")OR("travail=saint-etienne","travail=rennes"))',
+      step: 0,
+      modelSelector: null,
+      boolModal: false,
       isWorking: false,
-      isFinished: false,
-      limitedObs: false,
-      name: "Mean and std of operations' amount",
       titleMsg: 'The query is running',
       msg: 'Go to "Saved Queries" to follow it'
     }
-
-    this.demoState = this.state
-
-    this.state = {
-      selectedLayer: 1,
-      localquery: null,
-      layers_da: [
-        {
-          layer_job: [{ title: '', func: { label: '', value: '' }, args: {} }],
-          layer_size: 1
-        }
-      ],
-      limitedObs: false,
-      tabTargetProfile: [],
-      isEncrypted: true,
-      labels: [],
-      limit: 1000,
-      targetProfile: '',
-      isWorking: false,
-      isFinished: false,
-      name: ''
-    }
-    this.initialState = this.state
-  }
-
-  demo = () => {
-    this.setState(() => this.demoState)
   }
 
   // create the new query
@@ -422,10 +322,32 @@ export class NewQuery extends Component {
 
   displayArgs = () => {
     var out = []
+    const br = <br />
 
     try {
       const { layers_da, selectedLayer } = this.state
       out.push(<Label htmlFor="func0">{'Aggregation function(s)'}</Label>)
+      out.push(br)
+      out.push(
+        <ButtonAction
+          label="Add function"
+          rightIcon="plus"
+          onClick={() => {
+            var { layers_da, selectedLayer } = this.state
+            layers_da[selectedLayer - 1].layer_job.push({
+              title: '',
+              func: { title: '', label: '', value: '' },
+              args: []
+            })
+            this.setState({
+              layers_da: layers_da
+            })
+          }}
+        />
+      )
+      out.push(br)
+      out.push(br)
+      out.push(br)
       for (
         let idxJob = 0;
         idxJob < layers_da[selectedLayer - 1].layer_job.length;
@@ -446,6 +368,11 @@ export class NewQuery extends Component {
                 alert(e)
               }
             }}
+            onDelete={() => {
+              var { layers_da } = this.state
+              layers_da[selectedLayer - 1].layer_job.splice(idxJob, 1)
+              this.setState({ layers_da: layers_da })
+            }}
           />
         )
       }
@@ -459,236 +386,378 @@ export class NewQuery extends Component {
     const {
       localquery,
       layers_da,
+      modelSelector,
       selectedLayer,
       isEncrypted,
       targetProfile,
-      limitedObs,
-      isWorking,
       isFinished,
       limit,
       conceptSelector,
       labels,
+      step,
       name,
       titleMsg,
       msg
     } = this.state
 
-    return (
-      <div>
-        {isFinished ? (
-          <center>
-            <div>
-              <div style={styles.empty}>
-                <Empty icon="cozy" title={titleMsg} text={msg} />
+    try {
+      return (
+        <div>
+          {isFinished ? (
+            <center>
+              <div>
+                <div style={styles.empty}>
+                  <Empty icon="cozy" title={titleMsg} text={msg} />
+                </div>
               </div>
-            </div>
-          </center>
-        ) : (
-          <div>
-            <form onSubmit={this.handleRun}>
-              <p>
-                <ButtonAction
-                  label="Make query example"
-                  rightIcon="new"
-                  onClick={this.demo}
-                />
-                <ButtonAction
-                  type="error"
-                  label="Reset form"
-                  onClick={this.reset}
-                  rightIcon="file-none"
-                />
-              </p>
-              <br />
-              <Tabs initialActiveTab="targets">
-                <TabList>
-                  <Tab name="targets">Define targets</Tab>
-                  <Tab name="t">Query targets</Tab>
-                  <Tab name="da">Aggregate data</Tab>
-                  <Tab name="general">Run Query</Tab>
-                </TabList>
-                <TabPanels>
-                  <TabPanel name="targets">
-                    <Card style={{ backgroundColor: '#E6E6E6' }}>
-                      <center>
-                        <div>
-                          <Button
-                            label="And("
-                            type="button"
-                            theme="secondary"
-                            onClick={() => {
-                              var { tabTargetProfile } = this.state
-                              tabTargetProfile.push('AND(')
-                              this.setState({
-                                tabTargetProfile: tabTargetProfile,
-                                targetProfile: tabTargetProfile.join('')
-                              })
-                            }}
-                          />
-                          <Button
-                            label="Or("
-                            type="button"
-                            theme="secondary"
-                            onClick={() => {
-                              var { tabTargetProfile } = this.state
-                              tabTargetProfile.push('OR(')
-                              this.setState({
-                                tabTargetProfile: tabTargetProfile,
-                                targetProfile: tabTargetProfile.join('')
-                              })
-                            }}
-                          />
-                          <Button
-                            label=","
-                            type="button"
-                            theme="secondary"
-                            onClick={() => {
-                              var { tabTargetProfile } = this.state
-                              tabTargetProfile.push(',')
-                              this.setState({
-                                tabTargetProfile: tabTargetProfile,
-                                targetProfile: tabTargetProfile.join('')
-                              })
-                            }}
-                          />
-                          <Button
-                            label=")"
-                            type="button"
-                            theme="secondary"
-                            onClick={() => {
-                              var { tabTargetProfile } = this.state
-                              tabTargetProfile.push(')')
-                              this.setState({
-                                tabTargetProfile: tabTargetProfile,
-                                targetProfile: tabTargetProfile.join('')
-                              })
-                            }}
-                          />
-                          <Button
-                            label="DEL"
-                            type="button"
-                            icon="previous"
-                            theme="danger-outline"
-                            onClick={() => {
-                              var { tabTargetProfile } = this.state
-                              tabTargetProfile.splice(-1, 1)
-                              this.setState({
-                                tabTargetProfile: tabTargetProfile,
-                                targetProfile: tabTargetProfile.join('')
-                              })
-                            }}
-                          />
-                        </div>
-                        <br />
-                        <div>
-                          <InputGroup
-                            append={
-                              <Button
-                                label="Add"
-                                type="button"
-                                onClick={() => {
-                                  const { conceptSelector } = this.state
-                                  var { tabTargetProfile } = this.state
-                                  tabTargetProfile.push(
-                                    '"' + conceptSelector.value + '"'
-                                  )
-                                  this.setState({
-                                    tabTargetProfile: tabTargetProfile,
-                                    targetProfile: tabTargetProfile.join('')
-                                  })
-                                }}
-                              />
+            </center>
+          ) : (
+            <div>
+              <form onSubmit={this.handleRun}>
+                <br />
+                <div>
+                  {step != 0 && (
+                    <center>
+                      <Chip theme={step == 0 ? 'primary' : 'normal'}>New</Chip>
+                      <Icon
+                        icon="right"
+                        color="#297ef2"
+                        style={{ marginRight: '5px' }}
+                      />
+                      <Chip theme={step == 1 ? 'primary' : 'normal'}>
+                        Data-Owners
+                      </Chip>
+                      <Icon
+                        icon="right"
+                        color="#297ef2"
+                        style={{ marginRight: '5px' }}
+                      />
+                      <Chip theme={step == 2 ? 'primary' : 'normal'}>Data</Chip>
+                      <Icon
+                        icon="right"
+                        color="#297ef2"
+                        style={{ marginRight: '5px' }}
+                      />
+                      <Chip theme={step == 3 ? 'primary' : 'normal'}>
+                        Functions
+                      </Chip>
+                      <Icon
+                        icon="right"
+                        color="#297ef2"
+                        style={{ marginRight: '5px' }}
+                      />
+                      <Chip theme={step == 4 ? 'primary' : 'normal'}>
+                        Save As
+                      </Chip>
+                      {step != 0 && (
+                        <Button
+                          label="Previous"
+                          theme="secondary"
+                          type="button"
+                          style={{ marginLeft: '20px' }}
+                          onClick={() => {
+                            var { step } = this.state
+                            if (step != 0) {
+                              step = step - 1
                             }
-                          >
-                            <SelectBox
-                              value={conceptSelector}
-                              onChange={event => {
-                                this.setState({ conceptSelector: event })
+                            this.setState({ step: step })
+                          }}
+                        />
+                      )}
+                      {step != 0 && step != 4 && (
+                        <Button
+                          label="Next"
+                          type="button"
+                          theme="regular"
+                          onClick={() => {
+                            const { step } = this.state
+                            if (step < 4) {
+                              this.setState({ step: step + 1 })
+                            }
+                          }}
+                        />
+                      )}
+                      {step != 0 && step == 4 && (
+                        <Button label="Run" type="submit" theme="highlight" />
+                      )}
+                    </center>
+                  )}
+                  <br />
+                </div>
+                {(step == 0 && (
+                  <div>
+                    <h1>New query</h1>
+                    <br />
+                    <br />
+                    <Card
+                      style={{
+                        backgroundColor: '#E0E6F8',
+                        marginRight: '10%'
+                      }}
+                    >
+                      <h2>Start from scratch</h2>
+                      <Button
+                        label="Choose"
+                        theme="primary"
+                        type="button"
+                        onClick={() => {
+                          var { step } = this.state
+                          this.setState(blank)
+                          this.setState({
+                            step: step + 1
+                          })
+                        }}
+                      />
+                    </Card>
+                    <br />
+                    <br />
+                    <Card
+                      style={{
+                        backgroundColor: '#E0E6F8',
+                        marginRight: '10%'
+                      }}
+                    >
+                      <h2>Load a template</h2>
+                      <InputGroup
+                        prepend={
+                          <Button
+                            label="Choose"
+                            theme="primary"
+                            type="button"
+                            onClick={() => {
+                              var { step } = this.state
+                              if (modelSelector.value == 'mean') {
+                                this.setState(mean)
+                              } else if (modelSelector.value == 'min') {
+                                this.setState(min)
+                              } else {
+                                this.setState(blank)
+                              }
+                              this.setState({
+                                step: step + 1
+                              })
+                            }}
+                          />
+                        }
+                      >
+                        <SelectBox
+                          value={modelSelector}
+                          onChange={event => {
+                            this.setState({ modelSelector: event })
+                          }}
+                          options={optionsModels}
+                          id="idConcepts"
+                        />
+                      </InputGroup>
+                    </Card>
+                  </div>
+                )) ||
+                  (step == 1 && (
+                    <div>
+                      <h1>Select the targeted Cozy... </h1>
+                      <br />
+                      <Card
+                        style={{
+                          backgroundColor: '#E0E6F8',
+                          marginRight: '10%'
+                        }}
+                      >
+                        <center>
+                          <div>
+                            <Button
+                              label="And("
+                              type="button"
+                              theme="secondary"
+                              onClick={() => {
+                                var { tabTargetProfile } = this.state
+                                tabTargetProfile.push('AND(')
+                                this.setState({
+                                  tabTargetProfile: tabTargetProfile,
+                                  targetProfile: tabTargetProfile.join('')
+                                })
                               }}
-                              options={optionsConcept}
-                              id="idConcepts"
                             />
-                          </InputGroup>
-                        </div>
-                      </center>
-                      <br />
-                      <br />
+                            <Button
+                              label="Or("
+                              type="button"
+                              theme="secondary"
+                              onClick={() => {
+                                var { tabTargetProfile } = this.state
+                                tabTargetProfile.push('OR(')
+                                this.setState({
+                                  tabTargetProfile: tabTargetProfile,
+                                  targetProfile: tabTargetProfile.join('')
+                                })
+                              }}
+                            />
+                            <Button
+                              label=","
+                              type="button"
+                              theme="secondary"
+                              onClick={() => {
+                                var { tabTargetProfile } = this.state
+                                tabTargetProfile.push(',')
+                                this.setState({
+                                  tabTargetProfile: tabTargetProfile,
+                                  targetProfile: tabTargetProfile.join('')
+                                })
+                              }}
+                            />
+                            <Button
+                              label=")"
+                              type="button"
+                              theme="secondary"
+                              onClick={() => {
+                                var { tabTargetProfile } = this.state
+                                tabTargetProfile.push(')')
+                                this.setState({
+                                  tabTargetProfile: tabTargetProfile,
+                                  targetProfile: tabTargetProfile.join('')
+                                })
+                              }}
+                            />
+                            <Button
+                              label="DEL"
+                              type="button"
+                              icon="previous"
+                              theme="danger-outline"
+                              onClick={() => {
+                                var { tabTargetProfile } = this.state
+                                tabTargetProfile.splice(-1, 1)
+                                this.setState({
+                                  tabTargetProfile: tabTargetProfile,
+                                  targetProfile: tabTargetProfile.join('')
+                                })
+                              }}
+                            />
+                          </div>
+                          <br />
+                          <div>
+                            <InputGroup
+                              append={
+                                <Button
+                                  label="Add"
+                                  type="button"
+                                  onClick={() => {
+                                    const { conceptSelector } = this.state
+                                    var { tabTargetProfile } = this.state
+                                    tabTargetProfile.push(
+                                      '"' + conceptSelector.value + '"'
+                                    )
+                                    this.setState({
+                                      tabTargetProfile: tabTargetProfile,
+                                      targetProfile: tabTargetProfile.join('')
+                                    })
+                                  }}
+                                />
+                              }
+                            >
+                              <SelectBox
+                                value={conceptSelector}
+                                onChange={event => {
+                                  this.setState({ conceptSelector: event })
+                                }}
+                                options={optionsConcept}
+                                id="idConcepts"
+                              />
+                            </InputGroup>
+                          </div>
+                        </center>
+                        <br />
+                        <br />
 
-                      <div style={{ backgroundColor: 'white' }}>
-                        <Card>
-                          <p>
-                            {(() => {
-                              const { tabTargetProfile } = this.state
-                              var out = []
-                              if (tabTargetProfile.length != 0) {
-                                for (
-                                  let idx = 0;
-                                  idx < tabTargetProfile.length;
-                                  idx++
-                                ) {
+                        <div style={{ backgroundColor: 'white' }}>
+                          <Card>
+                            <p>
+                              {(() => {
+                                const { tabTargetProfile } = this.state
+                                var out = []
+                                if (tabTargetProfile.length != 0) {
+                                  for (
+                                    let idx = 0;
+                                    idx < tabTargetProfile.length;
+                                    idx++
+                                  ) {
+                                    out.push(
+                                      <a
+                                        style={{
+                                          backgroundColor: '#E0E6F8',
+                                          margin: '3px',
+                                          fontSize:
+                                            10 +
+                                            100 / (targetProfile.length + 1) +
+                                            'pt',
+                                          padding: '5px',
+                                          borderRadius: '4px'
+                                        }}
+                                      >
+                                        {tabTargetProfile[idx]}
+                                      </a>
+                                    )
+                                  }
+                                } else {
                                   out.push(
                                     <a
                                       style={{
-                                        backgroundColor: '#E0E6F8',
-                                        margin: '3px',
-                                        fontSize:
-                                          30 +
-                                          150 / (targetProfile.length + 1) +
-                                          'pt',
-                                        padding: '5px',
-                                        borderRadius: '4px'
+                                        fontSize: '20pt',
+                                        color: '#AAAAAA'
                                       }}
                                     >
-                                      {tabTargetProfile[idx]}
+                                      Create a target profile using the
+                                      buttons...
                                     </a>
                                   )
                                 }
-                              } else {
-                                out.push(
-                                  <a
-                                    style={{
-                                      fontSize: '20pt',
-                                      color: '#AAAAAA'
-                                    }}
-                                  >
-                                    Create a target profile using the buttons...
-                                  </a>
-                                )
+                                return out
+                              })()}
+                            </p>
+                          </Card>
+                        </div>
+                      </Card>
+
+                      <br />
+                      <br />
+                      <br />
+
+                      <Accordion>
+                        <AccordionItem label="Tips and help">
+                          <Infos
+                            title="How to build your target profile"
+                            icon="info"
+                            text="Target Profile is a logical operation made with OR, AND, and concepts that defines which Cozy is going to participate to your query. A concept is a caracteristic about one user. The separator between two concepts is ','."
+                          />
+                          <ul style={{ color: '#555555' }}>
+                            <li>{'"imc=surpoids"'}</li>
+                            <li>
+                              {'OR("maladie=cancer","imc=obesite-moderee")'}
+                            </li>
+                            <li>
+                              {'AND("maladie=cancer","imc=obesite-moderee")'}
+                            </li>
+                            <li>
+                              {
+                                'OR(AND("maladie=cancer","imc=obesite-moderee"),"maladie=diabete")'
                               }
-                              return out
-                            })()}
-                          </p>
-                        </Card>
-                      </div>
-                    </Card>
-
-                    <br />
-                    <br />
-                    <br />
-
-                    <Infos
-                      title="How to build your target profile"
-                      icon="info"
-                      text="Target Profile is a logical operation made with OR, AND, and concepts that defines which Cozy is going to participate to your query. A concept is a caracteristic about one user. The separator between two concepts is ','."
-                    />
-
-                    <ul>
-                      <li>"imc=surpoids"</li>
-                      <li>OR("maladie=cancer","imc=obesite-moderee")</li>
-                      <li>AND("maladie=cancer","imc=obesite-moderee")</li>
-                      <li>
-                        OR(AND("maladie=cancer","imc=obesite-moderee"),"maladie=diabete")
-                      </li>
-                      <li>
-                        OR(AND("maladie=cancer","imc=obesite-moderee"),AND("imc=normal","maladie=alzheimer"))
-                      </li>
-                      <li>
-                        OR(AND("maladie=cancer","imc=obesite-moderee")AND("imc=normal","maladie=alzheimer"))
-                      </li>
-                    </ul>
-                  </TabPanel>
-                  <TabPanel name="t">
-                    <center>
+                            </li>
+                            <li>
+                              {
+                                'OR(AND("maladie=cancer","imc=obesite-moderee"),AND("imc=normal","maladie=alzheimer"))'
+                              }
+                            </li>
+                            <li>
+                              {
+                                'OR(AND("maladie=cancer","imc=obesite-moderee")AND("imc=normal","maladie=alzheimer"))'
+                              }
+                            </li>
+                          </ul>
+                        </AccordionItem>
+                      </Accordion>
+                    </div>
+                  )) ||
+                  (step == 2 && (
+                    <div>
+                      <h1>What data do you want to use ? </h1>
+                      <br />
                       <Label htmlFor="idDatasets">Choose a doctype</Label>
                       <SelectBox
                         id="idDatasets"
@@ -702,7 +771,7 @@ export class NewQuery extends Component {
                       <br />
                       <div>
                         <Label htmlFor="limit">
-                          Maximal size of data retrieved for each target
+                          Maximal size of data retrieved from each cozy
                           (OPTIONAL)
                         </Label>
                         <Input
@@ -721,83 +790,91 @@ export class NewQuery extends Component {
                           step="1"
                         />
                       </div>
-                    </center>
-                    <br />
-                    <br />
-                    <br />
 
-                    <Infos
-                      title="On which doctype do you want to compute the query ?"
-                      icon="info"
-                      text="In the next step, you will have to specify the operation that will be made and on which key from the doctype you are choosing right now"
-                    />
+                      <br />
+                      <br />
+                      <br />
 
-                    <Infos
-                      title="The less data, the fastest"
-                      icon="multi-files"
-                      text="You can choose if you want to retrieve every data from one Cozy, or just a sample. Most of the time, a sample is enough. Keep the field empty if you want to compute over all the data."
-                    />
-                  </TabPanel>
-                  <TabPanel name="da">
-                    <div
-                      style={{
-                        marginLeft: '10%',
-                        marginRight: '10%'
-                      }}
-                    >
-                      {(() => {
-                        try {
-                          const { layers_da } = this.state
-                          const br = <br />
-                          var out = []
-                          for (
-                            let idxLayer = 0;
-                            idxLayer < layers_da.length;
-                            idxLayer++
-                          ) {
-                            out.push(
-                              <Chip
-                                variant="outlined"
-                                name={idxLayer + 1}
-                                style={
-                                  (idxLayer == layers_da.length - 1 && {
-                                    marginRight: '7.5rem',
-                                    color: '#297ef2'
-                                  }) || {
-                                    marginRight: '1.2rem',
-                                    color: '#297ef2'
+                      <Accordion>
+                        <AccordionItem label="Tips and help">
+                          <Infos
+                            title="On which doctype do you want to compute the query ?"
+                            icon="info"
+                            text="In the next step, you will have to specify the operation that will be made and on which key from the doctype you are choosing right now"
+                          />
+
+                          <Infos
+                            title="The less data, the fastest"
+                            icon="multi-files"
+                            text="You can choose if you want to retrieve every data from one Cozy, or just a sample. Most of the time, a sample is enough. Keep the field empty if you want to compute over all the data."
+                          />
+                        </AccordionItem>
+                      </Accordion>
+                    </div>
+                  )) ||
+                  (step == 3 && (
+                    <div>
+                      <h1>What do we do with this data ? </h1>
+                      <br />
+                      <br />
+                      <div>
+                        {(() => {
+                          try {
+                            const { layers_da } = this.state
+                            const br = <br />
+                            var out = []
+                            for (
+                              let idxLayer = 0;
+                              idxLayer < layers_da.length;
+                              idxLayer++
+                            ) {
+                              out.push(
+                                <Chip
+                                  name={idxLayer + 1}
+                                  style={
+                                    (idxLayer == layers_da.length - 1 && {
+                                      marginRight: '2rem',
+                                      color: '#297ef2'
+                                    }) || {
+                                      marginRight: '1.2rem',
+                                      color: '#297ef2'
+                                    }
                                   }
-                                }
-                                onClick={() => {
-                                  try {
-                                    this.setState({
-                                      selectedLayer: idxLayer + 1
-                                    })
-                                  } catch (e) {
-                                    alert(e)
-                                  }
-                                }}
-                              >
-                                <Icon
-                                  icon="stack"
-                                  style={{ marginRight: '1.2rem' }}
-                                />
-                                {(idxLayer == layers_da.length - 1 && 'MDA') ||
-                                  `Layer ${idxLayer + 1}`}
-                              </Chip>
-                            )
-                            if (idxLayer != layers_da.length - 1) {
+                                >
+                                  <Icon
+                                    icon="stack"
+                                    style={{ marginRight: '1.2rem' }}
+                                  />
+                                  {(idxLayer == layers_da.length - 1 &&
+                                    'MDA') ||
+                                    `Layer ${idxLayer + 1}`}
+                                </Chip>
+                              )
                               out.push(
                                 <Chip.Button
                                   theme="normal"
                                   variant="outlined"
                                   onClick={() => {
+                                    this.setState({
+                                      selectedLayer: idxLayer + 1,
+                                      boolModal: true
+                                    })
+                                  }}
+                                >
+                                  <Icon icon="pen" />
+                                </Chip.Button>
+                              )
+
+                              out.push(
+                                <Chip.Button
+                                  variant="outlined"
+                                  disabled={layers_da.length == 1}
+                                  onClick={() => {
                                     try {
                                       var { layers_da } = this.state
 
-                                      if (layers_da[idxLayer].layer_size != 1) {
-                                        layers_da[idxLayer].layer_size =
-                                          layers_da[idxLayer].layer_size - 1
+                                      if (layers_da.length > 1) {
+                                        layers_da.splice(idxLayer, 1)
                                       }
 
                                       this.setState({
@@ -808,272 +885,251 @@ export class NewQuery extends Component {
                                     }
                                   }}
                                 >
-                                  <Icon icon="cross" />
+                                  <Icon icon="trash" />
                                 </Chip.Button>
                               )
+
                               out.push(
-                                <Chip.Button
-                                  theme="normal"
-                                  variant="outlined"
-                                  onClick={() => {
-                                    try {
-                                      var { layers_da } = this.state
-
-                                      layers_da[idxLayer].layer_size =
-                                        layers_da[idxLayer].layer_size + 1
-
-                                      this.setState({
-                                        layers_da: layers_da
-                                      })
-                                    } catch (e) {
-                                      alert(e)
-                                    }
-                                  }}
+                                <Chip
+                                  theme={
+                                    (idxLayer == layers_da.length - 1 &&
+                                      layers_da[idxLayer].layer_size != 1 &&
+                                      'error') ||
+                                    'normal'
+                                  }
                                 >
-                                  <Icon icon="plus" />
-                                </Chip.Button>
-                              )
-                            }
-                            for (
-                              let idxDA = 0;
-                              idxDA <
-                              Math.min(layers_da[idxLayer].layer_size, 6);
-                              idxDA++
-                            ) {
-                              out.push(
-                                <Chip>
-                                  <Icon icon="cozy" />
+                                  <Icon
+                                    icon="cozy"
+                                    style={{ marginRight: '0.5rem' }}
+                                  />{' '}
+                                  {(idxLayer == layers_da.length - 1 &&
+                                    layers_da[idxLayer].layer_size != 1 &&
+                                    'This layer is MDA. It should be of size 1') ||
+                                    `x${layers_da[idxLayer].layer_size}`}
                                 </Chip>
                               )
-                            }
-                            if (layers_da[idxLayer].layer_size > 6) {
-                              out.push(
-                                <Badge
-                                  content={layers_da[idxLayer].layer_size - 6}
-                                  type="new"
-                                >
-                                  <ButtonAction
-                                    type="new"
-                                    disabled
-                                    leftIcon="plus"
-                                    label="New"
-                                    compact
-                                  />
-                                </Badge>
-                              )
-                            }
 
-                            out.push(br)
+                              var str = ''
+                              for (
+                                let idxJob = 0;
+                                idxJob < layers_da[idxLayer].layer_job.length;
+                                idxJob++
+                              ) {
+                                str =
+                                  str +
+                                  ' ' +
+                                  layers_da[idxLayer].layer_job[idxJob].title
+                              }
+                              if (str.split(' ').join('') != '') {
+                                out.push(
+                                  <Chip theme="normal">
+                                    <Icon
+                                      icon="gear"
+                                      style={{ marginRight: '0.5rem' }}
+                                    />
+                                    <em>{str}</em>
+                                  </Chip>
+                                )
+                              }
+                              out.push(br)
+                            }
+                            return out
+                          } catch (e) {
+                            alert(e)
                           }
-                          return out
-                        } catch (e) {
-                          alert(e)
-                        }
-                      })()}
-                      <p>
-                        <ButtonAction
-                          label="Add layer"
-                          rightIcon="plus"
-                          onClick={() => {
-                            var { layers_da } = this.state
-                            layers_da.push({
-                              layer_job: [
-                                {
-                                  title: '',
-                                  func: { label: '', value: '' },
-                                  args: {}
-                                }
-                              ],
-                              layer_size: 1
-                            })
-                            this.setState({
-                              layers_da: layers_da
-                            })
+                        })()}
+                        <p>
+                          <Chip.Button
+                            theme="normal"
+                            variant="outlined"
+                            disabled={layers_da.length == 1}
+                            onClick={() => {
+                              var { layers_da } = this.state
+                              layers_da.push({
+                                layer_job: [
+                                  {
+                                    title: '',
+                                    func: { label: '', value: '' },
+                                    args: {}
+                                  }
+                                ],
+                                layer_size: 1
+                              })
+
+                              this.setState({
+                                layers_da: layers_da,
+                                selectedLayer: layers_da.length,
+                                boolModal: true
+                              })
+                            }}
+                          >
+                            <Icon icon="plus" />
+                          </Chip.Button>
+                        </p>
+                      </div>
+
+                      {this.state.boolModal && (
+                        <Modal
+                          title={
+                            (selectedLayer == layers_da.length &&
+                              'Edit Main Data Aggregator') ||
+                            `Edit Layer ${selectedLayer}`
+                          }
+                          secondaryAction={() => {
+                            this.setState({ boolModal: false })
                           }}
-                        />
-                        <ButtonAction
-                          type="error"
-                          label="Remove last layer"
-                          onClick={() => {
-                            var { layers_da, selectedLayer } = this.state
-                            if (selectedLayer == layers_da.length) {
-                              selectedLayer = selectedLayer - 1
-                            }
-                            layers_da.splice(-1, 1)
-                            layers_da[layers_da.length - 1].layer_size = 1
-                            this.setState({
-                              layers_da: layers_da,
-                              selectedLayer: selectedLayer
-                            })
-                          }}
-                          rightIcon="file-none"
-                        />
-                      </p>
+                        >
+                          <ModalContent>
+                            <Label htmlFor="sizeLayer">
+                              Number of servers that compute this layer
+                            </Label>
+                            <Input
+                              id="sizeLayer"
+                              type="number"
+                              error={
+                                selectedLayer == layers_da.length &&
+                                layers_da[selectedLayer - 1].layer_size != 1
+                              }
+                              onChange={event => {
+                                var { layers_da } = this.state
+                                layers_da[selectedLayer - 1].layer_size =
+                                  event.target.value
+                                this.setState({
+                                  layers_da: layers_da
+                                })
+                              }}
+                              value={layers_da[selectedLayer - 1].layer_size}
+                              min="1"
+                              step="1"
+                            />
+
+                            <div>
+                              <Accordion>{this.displayArgs()}</Accordion>
+                            </div>
+                          </ModalContent>
+                        </Modal>
+                      )}
+
+                      <br />
+                      <br />
+                      <Accordion>
+                        <AccordionItem label="Tips and help">
+                          <Infos
+                            title="What's the Main Data Aggregator ?"
+                            icon="people"
+                            text="Setting several DA's imply that results from each DA have to be merged."
+                          />
+                          <Infos
+                            title="Several Data Aggregators for a safer query"
+                            icon="team"
+                            text="By setting several DAs, you build a stronger query. The less Data a DA receives, the less possible a statistic attack will be. Furthermore, the query should be faster."
+                          />
+                          <Infos
+                            title="What's in Input ? What's in Output ?"
+                            icon="merge"
+                            text="The first layer of DA receives data from Targets, layer n+1 receives results from n. Data are merged after layer n, shuffled and distributed to layer n+1"
+                          />
+                          <Infos
+                            title="Every Data Aggregator is independant"
+                            icon="unlink"
+                            text="Every DA on one layer computes the same treatment but on a different datasets, and possibly in a different execution environnement"
+                          />
+                        </AccordionItem>
+                      </Accordion>
                     </div>
-                    <br />
-                    <Card
-                      style={{
-                        marginLeft: '20%',
-                        marginRight: '20%'
-                      }}
-                    >
-                      <h2>
-                        {'Aggregation function(s) of '}
-                        <em style={{ color: '#297ef2' }}>
-                          {(selectedLayer == layers_da.length && 'MDA') ||
-                            `Layer ${selectedLayer}`}
-                        </em>
-                      </h2>
-                      <br />
-
-                      <Accordion>{this.displayArgs()}</Accordion>
-                      <br />
-
-                      <ButtonAction
-                        label="Add function"
-                        rightIcon="plus"
-                        onClick={() => {
-                          var { layers_da, selectedLayer } = this.state
-                          layers_da[selectedLayer - 1].layer_job.push({
-                            title: '',
-                            func: { title: '', label: '', value: '' },
-                            args: []
-                          })
-                          this.setState({
-                            layers_da: layers_da
-                          })
-                        }}
-                      />
-                      <ButtonAction
-                        type="error"
-                        rightIcon="trash"
-                        label="Remove last function"
-                        onClick={() => {
-                          var { layers_da, selectedLayer } = this.state
-                          layers_da[selectedLayer - 1].layer_job.splice(-1, 1)
-                          this.setState({
-                            layers_da: layers_da
-                          })
-                        }}
-                      />
-                    </Card>
-
-                    <br />
-                    <br />
-                    <br />
-                    <Infos
-                      title="What's the Main Data Aggregator ?"
-                      icon="people"
-                      text="Setting several DA's imply that results from each DA have to be merged."
-                    />
-                    <Infos
-                      title="Several Data Aggregators for a safer query"
-                      icon="team"
-                      text="By setting several DAs, you build a stronger query. The less Data a DA receives, the less possible a statistic attack will be. Furthermore, the query should be faster."
-                    />
-                    <Infos
-                      title="What's in Input ? What's in Output ?"
-                      icon="merge"
-                      text="The first layer of DA receives data from Targets, layer n+1 receives results from n. Data are merged after layer n, shuffled and distributed to layer n+1"
-                    />
-                    <Infos
-                      title="Every Data Aggregator is independant"
-                      icon="unlink"
-                      text="Every DA on one layer computes the same treatment but on a different datasets, and possibly in a different execution environnement"
-                    />
-                  </TabPanel>
-                  <TabPanel name="general">
+                  )) ||
+                  (step == 4 && (
                     <div>
-                      <p>
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          placeholder="Pretty name for a query"
-                          value={name}
+                      <h1>Save your query as...</h1>
+                      <div>
+                        <p>
+                          <Label htmlFor="name">Name</Label>
+                          <Input
+                            id="name"
+                            placeholder="Pretty name for a query"
+                            value={name}
+                            onChange={event => {
+                              this.setState({ name: event.target.value })
+                            }}
+                          />
+                        </p>
+
+                        <Label htmlFor="idConcepts">Labels</Label>
+                        <SelectBox
+                          options={optionsLabels}
+                          isMulti
+                          id="idConcepts"
+                          value={labels}
                           onChange={event => {
-                            this.setState({ name: event.target.value })
+                            this.setState({ labels: event })
+                          }}
+                          components={{
+                            Option: CheckboxOption
                           }}
                         />
-                      </p>
-
-                      <Label htmlFor="idConcepts">Labels</Label>
-                      <SelectBox
-                        options={optionsLabels}
-                        isMulti
-                        id="idConcepts"
-                        value={labels}
-                        onChange={event => {
-                          this.setState({ labels: event })
-                        }}
-                        components={{
-                          Option: CheckboxOption
-                        }}
-                      />
-                      <br />
-                      <Checkbox
-                        label="Encrypted query"
-                        disabled
-                        value={isEncrypted}
-                        onChange={() => {
-                          var { isEncrypted } = this.state
-                          isEncrypted = !isEncrypted
-                          this.setState({ isEncrypted: isEncrypted })
-                        }}
-                      />
-                    </div>
-                    <br />
-                    <Button
-                      label="Download Input as JSON"
-                      type="button"
-                      theme="secondary"
-                      icon="download"
-                      size="large"
-                      onClick={() => {
-                        window.open(
-                          (
-                            'data:application/json;charset=utf-8,' +
-                            encodeURIComponent(
-                              buildInputQuery(
-                                this.state.localquery,
-                                this.state.isEncrypted,
-                                this.state.targetProfile,
-                                this.state.layers_da,
-                                this.state.limitedObs,
-                                this.state.limit
-                              )['data']
+                        <br />
+                        <Checkbox
+                          label="Encrypted query"
+                          disabled
+                          value={isEncrypted}
+                          onChange={() => {
+                            var { isEncrypted } = this.state
+                            isEncrypted = !isEncrypted
+                            this.setState({ isEncrypted: isEncrypted })
+                          }}
+                        />
+                        <br />
+                      </div>
+                      <div>
+                        <Button
+                          label="Download Input as JSON"
+                          type="button"
+                          theme="secondary"
+                          icon="download"
+                          size="large"
+                          onClick={() => {
+                            window.open(
+                              (
+                                'data:application/json;charset=utf-8,' +
+                                encodeURIComponent(
+                                  buildInputQuery(
+                                    this.state.localquery,
+                                    this.state.isEncrypted,
+                                    this.state.targetProfile,
+                                    this.state.layers_da,
+                                    this.state.limitedObs,
+                                    this.state.limit
+                                  )['data']
+                                )
+                              )
+                                .split('%20')
+                                .join('')
                             )
-                          )
-                            .split('%20')
-                            .join('')
-                        )
-                      }}
-                    />
-                    <Button
-                      onClick={this.submit}
-                      type="submit"
-                      theme="highlight"
-                      busy={isWorking}
-                      label="Run"
-                      size="large"
-                      extension="narrow"
-                    />
-                    <br />
-                    <br />
-                    <br />
-                    <Infos
-                      title="Make your query easier to retrieve"
-                      icon="file-type-files"
-                      text="For now, this panel is only useful to easily retrieve queries afterwards."
-                    />
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
-            </form>
-          </div>
-        )}
-      </div>
-    )
+                          }}
+                        />
+                        <br />
+                        <br />
+                        <br />
+                        <Accordion>
+                          <AccordionItem label="Tips and help">
+                            <Infos
+                              title="Make your query easier to retrieve"
+                              icon="file-type-files"
+                              text="For now, this panel is only useful to easily retrieve queries afterwards."
+                            />
+                          </AccordionItem>
+                        </Accordion>
+                      </div>
+                    </div>
+                  ))}
+              </form>
+            </div>
+          )}
+        </div>
+      )
+    } catch (e) {
+      alert(e)
+    }
   }
 }
-
 export default withClient(NewQuery)
