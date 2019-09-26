@@ -51,14 +51,14 @@ const min = {
           title: 'MIN(MIN_AMOUNT)',
           func: { label: 'Min', value: 'min' },
           args: {
-            sum: 'min_amount'
+            key: 'min_amount'
           }
         },
         {
           title: 'MAX(MAX_AMOUNT)',
           func: { label: 'Max', value: 'max' },
           args: {
-            sum: 'max_amount'
+            key: 'max_amount'
           }
         }
       ],
