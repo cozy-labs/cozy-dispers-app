@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 
 import { withMutations } from 'cozy-client'
-import TrainingsRemoveButton from './TrainingsRemoveButton'
+import ButtonRemoveQuery from './ButtonRemoveQuery'
 import ViewModal from './ViewModal'
 import Card from 'cozy-ui/react/Card'
 import Chip from 'cozy-ui/react/Chip'
@@ -96,11 +96,11 @@ export class MLList extends Component {
                       <table>
                         <tr>
                           <th>
-                            <ViewModal training={mTrain} />
+                            <ViewModal query={mTrain} />
                           </th>
                           <th />
                           <th>
-                            <TrainingsRemoveButton training={mTrain} />
+                            <ButtonRemoveQuery query={mTrain} />
                           </th>
                         </tr>
                       </table>

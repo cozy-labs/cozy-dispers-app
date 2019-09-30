@@ -13,11 +13,11 @@ export class StepDurations extends Component {
   }
 
   componentDidMount() {
-    const { training } = this.props
+    const { query } = this.props
     try {
       var times = []
       var labels = []
-      var tmp = new Date(training.state.ExecutionMetadata.start)
+      var tmp = new Date(query.state.ExecutionMetadata.start)
       times.push(tmp.getTime())
 
       var tasks = [
@@ -26,13 +26,13 @@ export class StepDurations extends Component {
         'SelectTargets',
         'LocalQuery'
       ]
-      for (var i = 0; i < training['layers_da'].length; i++) {
+      for (var i = 0; i < query['layers_da'].length; i++) {
         tasks.push('LaunchLayer' + i)
       }
 
       for (i = 0; i < tasks.length; i++) {
         tmp = new Date(
-          training.state.ExecutionMetadata.tasks[tasks[i]].end
+          query.state.ExecutionMetadata.tasks[tasks[i]].end
         ).getTime()
         if (tmp != -62135596800000) {
           times.push(tmp)
@@ -85,12 +85,12 @@ export class TimeDistribution extends Component {
   }
 
   componentDidMount() {
-    const { training } = this.props
+    const { query } = this.props
     try {
       var communication = 0
       var computation = 0
-      var tmp2 = training.state.ExecutionMetadata.tasks['DecryptConcept']
-      var tmp = training.state.ExecutionMetadata
+      var tmp2 = query.state.ExecutionMetadata.tasks['DecryptConcept']
+      var tmp = query.state.ExecutionMetadata
       var conductor =
         new Date(tmp2.start).getTime() - new Date(tmp.start).getTime()
 
@@ -102,11 +102,11 @@ export class TimeDistribution extends Component {
       ]
 
       for (var i = 0; i < tasks.length; i++) {
-        tmp2 = training.state.ExecutionMetadata.tasks['LaunchLayer0']
-        tmp = training.state.ExecutionMetadata.tasks[tasks[i]]
+        tmp2 = query.state.ExecutionMetadata.tasks['LaunchLayer0']
+        tmp = query.state.ExecutionMetadata.tasks[tasks[i]]
 
         if (i < tasks.length - 1) {
-          tmp2 = training.state.ExecutionMetadata.tasks[tasks[i + 1]]
+          tmp2 = query.state.ExecutionMetadata.tasks[tasks[i + 1]]
           conductor =
             conductor +
             new Date(tmp2.start).getTime() -
@@ -139,16 +139,16 @@ export class TimeDistribution extends Component {
         }
       }
 
-      for (i = 1; i < training['layers_da'].length; i++) {
-        tmp = training.state.ExecutionMetadata.tasks['LaunchLayer' + i]
+      for (i = 1; i < query['layers_da'].length; i++) {
+        tmp = query.state.ExecutionMetadata.tasks['LaunchLayer' + i]
         conductor =
           conductor +
           new Date(tmp.end).getTime() -
           new Date(tmp.start).getTime()
       }
 
-      for (i = 0; i < training.state.AsyncMetadata.length; i++) {
-        tmp = training.state.AsyncMetadata[i]
+      for (i = 0; i < query.state.AsyncMetadata.length; i++) {
+        tmp = query.state.AsyncMetadata[i]
         if (new Date(tmp.arrival).getTime() != -62135596800000) {
           communication =
             communication +

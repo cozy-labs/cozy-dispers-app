@@ -1,14 +1,13 @@
 import React, { Component } from 'react'
 
 import { withClient } from 'cozy-client'
-import Avatar from 'cozy-ui/react/Avatar'
 import { Button, ButtonLink } from 'cozy-ui/react/Button'
-import Chip from 'cozy-ui/react/Chip'
-import { FigureBlock } from 'cozy-ui/react/Figure'
-import Icon from 'cozy-ui/react/Icon'
-import Card from 'cozy-ui/react/Card'
 import { Modal, ModalContent } from 'cozy-ui/react'
 import { StepDurations, TimeDistribution } from './Graphs'
+import HeaderQuery from './HeaderQuery'
+import AggregationLayers from './AggregationLayers'
+import ErrorMessages from './ErrorMessages'
+import Results from './Results'
 
 const {
   Tabs,
@@ -18,44 +17,18 @@ const {
   TabPanel
 } = require('cozy-ui/react/Tabs')
 
-const ContactChip = ({ contact }) => (
-  <Chip style={{ paddingLeft: '0.25rem' }}>
-    <Avatar
-      textId={contact.name}
-      text={contact.initials}
-      size="small"
-      style={{ marginRight: '0.5rem' }}
-    />{' '}
-    {contact.name}
-  </Chip>
-)
-
-function displayFuncs(training, indexLayer) {
-  try {
-    var i = 0
-    var out = []
-    while (i < training.layers_da[indexLayer].layer_job.length) {
-      out.push(<p>{training.layers_da[indexLayer].layer_job[i].title}</p>)
-      i++
-    }
-    return out
-  } catch (e) {
-    alert(e)
-  }
-}
-
 export class ViewModal extends Component {
   constructor(props, context) {
     super(props, context)
     // initial component state
     this.state = {
       boolModal: false,
-      training: this.props.training
+      query: this.props.query
     }
   }
 
   render() {
-    const { boolModal, training } = this.state
+    const { boolModal, query } = this.state
 
     return (
       <div>
@@ -74,113 +47,7 @@ export class ViewModal extends Component {
               }}
             >
               <ModalContent>
-                <div>
-                  <center>
-                    <table className="tg">
-                      <tr>
-                        <th>
-                          <b>Name :</b>
-                        </th>
-                        <th>{training.name}</th>
-                      </tr>
-                      <tr>
-                        <th>
-                          <b>State :</b>
-                        </th>
-                        <th>
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['ci'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['ci'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['ci'] && '#08b442') ||
-                              (!training.state.Checkpoints['ci'] && '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['fetch'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['fetch'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['fetch'] &&
-                                '#08b442') ||
-                              (!training.state.Checkpoints['fetch'] &&
-                                '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['tf'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['tf'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['tf'] && '#08b442') ||
-                              (!training.state.Checkpoints['tf'] && '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['t'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['t'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['t'] && '#08b442') ||
-                              (!training.state.Checkpoints['t'] && '#F52D2D')
-                            }
-                          />
-                          <Icon
-                            icon={
-                              (training.state.Checkpoints['da'] &&
-                                'check-circle') ||
-                              (!training.state.Checkpoints['da'] &&
-                                'cross-small')
-                            }
-                            color={
-                              (training.state.Checkpoints['da'] && '#08b442') ||
-                              (!training.state.Checkpoints['da'] && '#F52D2D')
-                            }
-                          />
-                        </th>
-                      </tr>
-                      <tr>
-                        <th>
-                          <b>Doctype :</b>
-                        </th>
-                        <th>{training.localquery.value}</th>
-                      </tr>
-                      {new Date(
-                        training.state.ExecutionMetadata.end
-                      ).getTime() != -62135596800000 && (
-                        <tr>
-                          <th>
-                            <b>Duration :</b>{' '}
-                          </th>
-                          <th>
-                            {(new Date(
-                              training.state.ExecutionMetadata.end
-                            ).getTime() -
-                              new Date(
-                                training.state.ExecutionMetadata.start
-                              ).getTime()) /
-                              1000}
-                            s
-                          </th>
-                        </tr>
-                      )}
-                    </table>
-                  </center>
-                  <br />
-                </div>
+                <HeaderQuery query={this.props.query} />
 
                 <Tabs initialActiveTab="res">
                   <TabList>
@@ -191,105 +58,33 @@ export class ViewModal extends Component {
                   </TabList>
                   <TabPanels>
                     <TabPanel name="targets">
-                      <font size="5">{training.targetProfile}</font>
+                      <font size="5">{query.targetProfile}</font>
                     </TabPanel>
                     <TabPanel name="aggr">
-                      {(training => {
-                        var out = []
-                        const br = <br />
-                        training.layers_da.forEach(function(item, index) {
-                          out.push(
-                            <Card>
-                              <ContactChip
-                                contact={{
-                                  initials: index.toString(),
-                                  name: 'Layer ' + index.toString()
-                                }}
-                              />
-                              {displayFuncs(training, index)}
-                            </Card>
-                          )
-                          out.push(br)
-                        })
-                        return out
-                      })(training)}
+                      <AggregationLayers query={query} />
                     </TabPanel>
                     <TabPanel name="exe">
-                      {(training => {
-                        var out = []
-                        const br = <br />
-                        for (var task in training.state.ExecutionMetadata
-                          .tasks) {
-                          if (
-                            training.state.ExecutionMetadata.tasks[task]
-                              .error != null &&
-                            training.state.ExecutionMetadata.tasks[task]
-                              .error != ''
-                          ) {
-                            out.push(
-                              <Chip theme="error" variant="outlined">
-                                {
-                                  training.state.ExecutionMetadata.tasks[task]
-                                    .error
-                                }
-                              </Chip>
-                            )
-                          }
-                        }
-
-                        return out
-                      })(training)}
-
-                      {new Date(
-                        training.state.ExecutionMetadata.end
-                      ).getTime() != -62135596800000 && (
-                        <StepDurations training={training}></StepDurations>
+                      <ErrorMessages query={query} />
+                      {new Date(query.state.ExecutionMetadata.end).getTime() !=
+                        -62135596800000 && (
+                        <div>
+                          <StepDurations query={query}></StepDurations>
+                          <TimeDistribution query={query}></TimeDistribution>
+                        </div>
                       )}
                       <br />
-                      {new Date(
-                        training.state.ExecutionMetadata.end
-                      ).getTime() != -62135596800000 && (
-                        <TimeDistribution
-                          training={training}
-                        ></TimeDistribution>
-                      )}
                     </TabPanel>
                     <TabPanel name="res">
                       <form>
                         <div>
-                          {(training => {
-                            try {
-                              var out = []
-                              const br = <br />
-
-                              for (var res in training.state.Results) {
-                                if (res != 'length') {
-                                  out.push(
-                                    <FigureBlock
-                                      label={res}
-                                      total={training.state.Results[res]}
-                                      symbol=""
-                                      coloredPositive
-                                      coloredNegative
-                                      signed
-                                    />
-                                  )
-                                  out.push(br)
-                                }
-                              }
-                              return out
-                            } catch (e) {
-                              alert(e)
-                            }
-                          })(training)}
-
+                          <Results query={query} />
                           <ButtonLink
                             label="Download Query as JSON"
                             target="_blank"
                             icon="download"
                             href={
                               'data:application/json;charset=utf-8,' +
-                              encodeURIComponent(JSON.stringify(training))
+                              encodeURIComponent(JSON.stringify(query))
                             }
                           />
                           <br />
@@ -304,55 +99,43 @@ export class ViewModal extends Component {
             </Modal>
           </div>
         ) : (
-          <Button
-            onClick={() => this.setState({ boolModal: true })}
-            label="More details"
-            size="large"
-            extension="narrow"
-          />
+          <div>
+            <Button
+              onClick={() => this.setState({ boolModal: true })}
+              label="More details"
+              size="large"
+              extension="narrow"
+            />
+          </div>
         )}
       </div>
     )
   }
 
   componentDidMount() {
-    const { training } = this.state
+    const { query } = this.state
     const { client } = this.props
 
     client.stackClient
       .fetchJSON(
         'GET',
-        '/remote/cc.cozycloud.dispers.state?idquery=' + training.queryid
+        '/remote/cc.cozycloud.dispers.state?idquery=' + query.queryid
       )
       .then(async response => {
         try {
-          training.state = response
-          await client.save(training)
+          query.state = response
+          await client.save(query)
           this.setState(() => ({
-            training: training
+            query: query
           }))
         } catch (err) {
           alert(err)
           // TODO: Stop the spinner
           // TODO: Display error message in results
-          /*
-        this.setState(() => ({
-          isWorking: false,
-          isFinished: true,
-        }))
-        */
         }
       })
       .catch(error => {
         alert(error)
-        // TODO: Stop the spinner
-        // TODO: Display error message in results
-        /*
-      this.setState(() => ({
-        isWorking: false,
-        isFinished: true,
-      }))
-      */
       })
   }
 }

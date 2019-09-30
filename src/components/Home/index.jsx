@@ -60,11 +60,7 @@ export const Home = () => {
 
         <Card>
           <SubTitle className="u-mb-1">Blog post</SubTitle>
-          <Text className="u-mb-1">
-            voluptatum deleniti atque corrupti quos dolores et quas molestias
-            excepturi sint occaecati cupiditate non provident. Similique sunt in
-            culpa qui officia.
-          </Text>
+          <Text className="u-mb-1"></Text>
           <ButtonLink
             label="Read"
             href="https://blog.cozy.io/fr/entrainer-une-ia-sans-posseder-la-donnee-est-possible/"
@@ -73,11 +69,7 @@ export const Home = () => {
         <br />
         <Card>
           <SubTitle className="u-mb-1">Docs Cozy-DISPERS</SubTitle>
-          <Text className="u-mb-1">
-            voluptatum deleniti atque corrupti quos dolores et quas molestias
-            excepturi sint occaecati cupiditate non provident. Similique sunt in
-            culpa qui officia.
-          </Text>
+          <Text className="u-mb-1"></Text>
           <ButtonLink
             label="Link to Docs"
             href="https://github.com/tintinmar1995/cozy-stack/tree/enclaves-docs/docs"
@@ -86,10 +78,7 @@ export const Home = () => {
         <br />
         <Card>
           <SubTitle className="u-mb-1">GitHub</SubTitle>
-          <Text className="u-mb-1">
-            Id est laborum et dolorum fuga. At vero eos et accusamus et iusto
-            odio dignissimos ducimus qui blanditiis praesentium.
-          </Text>
+          <Text className="u-mb-1"></Text>
           <ButtonLink
             label="Link to Repo"
             href="https://github.com/tintinmar1995/cozy-stack"
